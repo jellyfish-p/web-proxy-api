@@ -1,0 +1,35 @@
+app:
+  name: web-proxy-api
+  port: 3000
+
+# Admin credentials for management panel
+admin:
+  username: admin
+  password: admin123
+
+# API Keys that can use the managed accounts
+keys:
+  - your-api-key-here
+  - another-key-here
+
+# Projects configuration
+# Each project can have its own settings
+projects:
+  deepseek:
+    enabled: true
+    # Accounts are stored as individual JSON files in /accounts/deepseek directory
+    # Each file should contain: { "email": "...", "password": "...", "token": "..." }
+    # or { "mobile": "...", "password": "...", "token": "..." }
+  
+  # Example: Add more projects here
+  # openai:
+  #   enabled: true
+  #   api_key: your-openai-api-key
+  # 
+  # anthropic:
+  #   enabled: true
+  #   api_key: your-anthropic-api-key
+
+logging:
+  level: info
+  format: json
