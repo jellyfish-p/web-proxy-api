@@ -62,7 +62,7 @@
 
       <template #footer>
         <div class="text-center text-sm text-gray-500">
-          <p>基于 Nuxt 3 + NuxtUI 构建</p>
+          <p>基于 Nuxt 4 + NuxtUI 构建</p>
         </div>
       </template>
     </UCard>

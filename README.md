@@ -7,6 +7,7 @@
 - ✅ **多项目架构**: 支持集成多个 AI 服务提供商（DeepSeek、OpenAI、Anthropic 等）
 - ✅ **Web 管理面板**: 基于 NuxtUI 的现代化管理界面
 - ✅ **令牌管理**: 支持 Session 令牌和账号密码两种方式
+- ✅ **代理支持**: 每个令牌可配置独立的代理服务器（SOCKS5/HTTP/HTTPS）
 - ✅ **模型路由**: 根据模型名称自动路由到对应的服务提供商
 - ✅ **项目隔离**: 每个项目有独立的 utils 和 plugins，互不干扰
 - ✅ **文件化账号管理**: 每个项目的账号存储为独立的 JSON 文件
@@ -181,9 +182,12 @@ logging:
 {
   "email": "your-email@example.com",
   "password": "your-password",
-  "token": ""
+  "token": "",
+  "proxy_url": "socks5://127.0.0.1:1080"
 }
 ```
+
+**注意**: `proxy_url` 是可选字段，支持 SOCKS5、SOCKS4、HTTP、HTTPS 代理。详见 [代理配置文档](docs/PROXY.md)。
 
 ## 运行
 
@@ -377,6 +381,7 @@ MIT
 
 - [管理面板快速开始](docs/ADMIN_QUICKSTART.md)
 - [管理面板完整文档](docs/MANAGEMENT_PANEL.md)
+- [代理配置文档](docs/PROXY.md)
 - [添加新项目指南](docs/ADD_NEW_PROJECT.md)
 - [架构说明](docs/ARCHITECTURE.md)
 - [Nuxt 3 文档](https://nuxt.com/)

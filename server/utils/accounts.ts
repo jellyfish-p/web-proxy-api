@@ -9,6 +9,7 @@ export interface Account {
     password?: string;
     token?: string;
     device_id?: string;
+    proxy_url?: string;  // Optional proxy URL (socks5://, socks4://, http://, https://)
     [key: string]: any;
 }
 

@@ -1,5 +1,6 @@
 import { H3Event } from 'h3';
 import { getConfigValue } from './config';
+import { verifyPassword } from './crypto';
 
 const SESSION_COOKIE_NAME = 'admin_session';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -51,7 +52,13 @@ export function validateAdminCredentials(username: string, password: string): bo
     const adminUsername = getConfigValue('admin.username', 'admin');
     const adminPassword = getConfigValue('admin.password', 'admin123');
     
-    return username === adminUsername && password === adminPassword;
+    // 验证用户名
+    if (username !== adminUsername) {
+        return false;
+    }
+    
+    // 使用加密验证函数验证密码（支持明文和加密密码）
+    return verifyPassword(password, adminPassword);
 }
 
 export function getSessionFromEvent(event: H3Event): string | null {

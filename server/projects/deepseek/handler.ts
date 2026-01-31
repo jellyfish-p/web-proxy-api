@@ -13,6 +13,7 @@ import {
     login_deepseek_via_account,
 } from './utils/api';
 import { getConfigValue } from '../../utils/config';
+import { proxyFetch } from '../../utils/proxy-fetch';
 
 // ----------------------------------------------------------------------
 // Helper: Messages Prepare (Ported from Python)
@@ -102,6 +103,7 @@ export async function handleDeepSeekRequest(params: DeepSeekHandlerParams) {
         state.account = selection.account;
         state.account_filename = selection.id;
         state.tried_accounts.push(getAccountIdentifier(state.account));
+        state.proxy_url = state.account.proxy_url;  // Set proxy URL from account
 
         if (!state.account.token?.trim()) {
             try {
@@ -173,11 +175,15 @@ export async function handleDeepSeekRequest(params: DeepSeekHandlerParams) {
         search_enabled,
     };
 
-    const dsResponse = await fetch(DEEPSEEK_COMPLETION_URL, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(payload)
-    });
+    const dsResponse = await proxyFetch(
+        DEEPSEEK_COMPLETION_URL,
+        {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        },
+        state.proxy_url
+    );
 
     if (!dsResponse.ok) {
         if (state.use_config_token && state.account_filename) releaseAccount(state.account_filename);

@@ -2,6 +2,7 @@ import { compute_pow_answer } from './wasm';
 import { getConfigValue } from './config';
 import { resolve } from 'path';
 import { saveAccount, getAccountIdentifier } from './accounts';
+import { proxyFetch } from './proxy-fetch';
 
 const DEEPSEEK_HOST = "chat.deepseek.com";
 const DEEPSEEK_LOGIN_URL = `https://${DEEPSEEK_HOST}/api/v0/users/login`;
@@ -27,6 +28,7 @@ export interface RequestState {
     deepseek_token?: string;
     tried_accounts?: string[];
     account_filename?: string;
+    proxy_url?: string;  // Proxy URL from account
 }
 
 export interface RequestWithState {
@@ -68,11 +70,15 @@ export async function login_deepseek_via_account(account: any, account_filename:
     }
 
     try {
-        const response = await fetch(DEEPSEEK_LOGIN_URL, {
-            method: 'POST',
-            headers: BASE_HEADERS,
-            body: JSON.stringify(payload),
-        });
+        const response = await proxyFetch(
+            DEEPSEEK_LOGIN_URL,
+            {
+                method: 'POST',
+                headers: BASE_HEADERS,
+                body: JSON.stringify(payload),
+            },
+            account.proxy_url
+        );
 
         if (!response.ok) {
             throw new Error(`Login request failed: ${response.status}`);
@@ -104,11 +110,15 @@ export async function create_session(request: RequestWithState, max_attempts = 3
     while (attempts < max_attempts) {
         const headers = get_auth_headers(request.state);
         try {
-            const response = await fetch(DEEPSEEK_CREATE_SESSION_URL, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ agent: "chat" })
-            });
+            const response = await proxyFetch(
+                DEEPSEEK_CREATE_SESSION_URL,
+                {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ agent: "chat" })
+                },
+                request.state.proxy_url
+            );
             
             // Only try to parse JSON if response is OK or we suspect it contains error info
             let data: any = {};
@@ -148,11 +158,15 @@ export async function get_pow_response(request: RequestWithState, max_attempts =
         const headers = get_auth_headers(request.state);
         
         try {
-            const response = await fetch(DEEPSEEK_CREATE_POW_URL, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ target_path: "/api/v0/chat/completion" }),
-            });
+            const response = await proxyFetch(
+                DEEPSEEK_CREATE_POW_URL,
+                {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ target_path: "/api/v0/chat/completion" }),
+                },
+                request.state.proxy_url
+            );
 
             if (!response.ok) {
                  attempts++;
