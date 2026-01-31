@@ -2,9 +2,16 @@ import { getConfigValue } from '../config';
 import crypto from 'node:crypto';
 import { getDynamicHeaders } from './statsig';
 import { getGrokProxy, forceRefreshGrokProxy } from './proxy-pool';
-import { GrokModels, GrokTokenTypes, type GrokTokenType } from './models';
-import { grokTokenStore, type GrokTokenRecord } from './token-store';
+import { GrokModels, type GrokTokenType } from './models';
 import { grokImageCache, grokVideoCache } from './cache';
+import {
+    selectBestToken,
+    updateTokenLimits,
+    recordTokenFailure,
+    resetTokenFailure,
+    type GrokAccount
+} from './accounts';
+import { markTokenUsed } from './token-refresh';
 
 const GROK_API_BASE = 'https://grok.com';
 
@@ -13,125 +20,42 @@ const RATE_LIMIT_API = `${GROK_API_BASE}/rest/rate-limits`;
 const UPLOAD_API = `${GROK_API_BASE}/rest/app-chat/upload-file`;
 const CREATE_POST_API = `${GROK_API_BASE}/rest/app-chat/create-post`;
 
-const MAX_FAILURES = 3;
-
 export type GrokClientResult = {
     response: Response;
     token: string;
+    filename: string;
     model: string;
 };
 
-export async function getTokenData() {
-    return grokTokenStore.ensureLoaded();
-}
-
-function extractSso(authToken: string): string | null {
-    const match = authToken.match(/sso=([^;]+)/);
-    return match ? match[1] || null : null;
-}
-
-async function persistTokenData(data: any): Promise<void> {
-    await grokTokenStore.setData(data);
-}
-
-function selectBestToken(tokens: Record<string, GrokTokenRecord>, field: 'remainingQueries' | 'heavyremainingQueries') {
-    const unused: string[] = [];
-    const used: Array<[string, number]> = [];
-
-    for (const [key, data] of Object.entries(tokens)) {
-        if (data.status === 'expired') continue;
-        if ((data.failedCount || 0) >= MAX_FAILURES) continue;
-
-        const remaining = Number(data[field] ?? -1);
-        if (remaining === 0) continue;
-        if (remaining === -1) {
-            unused.push(key);
-        } else if (remaining > 0) {
-            used.push([key, remaining]);
-        }
-    }
-
-    if (unused.length > 0) return { token: unused[0], remaining: -1 };
-    if (used.length > 0) {
-        used.sort((a, b) => b[1] - a[1]);
-        const best = used[0];
-        if (!best) return { token: null, remaining: null };
-        return { token: best[0], remaining: best[1] };
-    }
-
-    return { token: null, remaining: null };
-}
-
-export async function selectToken(model: string): Promise<{ token: string; tokenType: GrokTokenType }> {
-    const data = await getTokenData();
-    const field = model === 'grok-4-heavy' ? 'heavyremainingQueries' : 'remainingQueries';
-
-    let selection = selectBestToken(data[GrokTokenTypes.NORMAL], field);
-    let tokenType: GrokTokenType = GrokTokenTypes.NORMAL;
-    if (!selection.token) {
-        selection = selectBestToken(data[GrokTokenTypes.SUPER], field);
-        tokenType = GrokTokenTypes.SUPER;
-    }
-
-    if (!selection.token) {
+export async function selectToken(model: string): Promise<{ token: string; filename: string; tokenType: GrokTokenType }> {
+    const result = await selectBestToken(model);
+    if (!result) {
         throw new Error(`No available Grok token for model ${model}`);
     }
-
-    return { token: selection.token, tokenType };
+    return { 
+        token: result.account.token, 
+        filename: result.filename,
+        tokenType: result.account.tokenType || 'ssoNormal'
+    };
 }
 
 function buildAuthToken(token: string): string {
     return `sso-rw=${token};sso=${token}`;
 }
 
-async function updateLimits(sso: string, model: string, normal?: number, heavy?: number) {
-    const data = await getTokenData();
-    for (const type of [GrokTokenTypes.NORMAL, GrokTokenTypes.SUPER]) {
-        if (data[type][sso]) {
-            if (normal !== undefined) data[type][sso].remainingQueries = normal;
-            if (heavy !== undefined) data[type][sso].heavyremainingQueries = heavy;
-            await persistTokenData(data);
-            return;
-        }
-    }
+async function updateLimits(filename: string, model: string, normal?: number, heavy?: number) {
+    await updateTokenLimits(filename, normal, heavy);
 }
 
-async function recordFailure(authToken: string, status: number, msg: string): Promise<void> {
-    const sso = extractSso(authToken);
-    if (!sso) return;
-    const data = await getTokenData();
-    for (const type of [GrokTokenTypes.NORMAL, GrokTokenTypes.SUPER]) {
-        const record = data[type][sso];
-        if (record) {
-            record.failedCount = (record.failedCount || 0) + 1;
-            record.lastFailureTime = Date.now();
-            record.lastFailureReason = `${status}: ${msg}`;
-            if (status >= 400 && status < 500 && record.failedCount >= MAX_FAILURES) {
-                record.status = 'expired';
-            }
-            await persistTokenData(data);
-            return;
-        }
-    }
+async function recordFailure(filename: string, status: number, msg: string): Promise<void> {
+    await recordTokenFailure(filename, status, msg);
 }
 
-async function resetFailure(authToken: string): Promise<void> {
-    const sso = extractSso(authToken);
-    if (!sso) return;
-    const data = await getTokenData();
-    for (const type of [GrokTokenTypes.NORMAL, GrokTokenTypes.SUPER]) {
-        const record = data[type][sso];
-        if (record && record.failedCount > 0) {
-            record.failedCount = 0;
-            record.lastFailureTime = null;
-            record.lastFailureReason = null;
-            await persistTokenData(data);
-            return;
-        }
-    }
+async function resetFailure(filename: string): Promise<void> {
+    await resetTokenFailure(filename);
 }
 
-async function requestRateLimit(authToken: string, model: string) {
+async function requestRateLimit(authToken: string, filename: string, model: string) {
     const rateModel = GrokModels.toRateLimit(model);
     const payload = { requestKind: 'DEFAULT', modelName: rateModel };
     const headers = {
@@ -175,7 +99,7 @@ async function requestRateLimit(authToken: string, model: string) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                     continue;
                 }
-                await recordFailure(authToken, 403, 'blocked');
+                await recordFailure(filename, 403, 'blocked');
                 return;
             }
 
@@ -184,23 +108,20 @@ async function requestRateLimit(authToken: string, model: string) {
                     await new Promise(resolve => setTimeout(resolve, (outer + 1) * 100));
                     break;
                 }
-                await recordFailure(authToken, response.status, 'rate-limit');
+                await recordFailure(filename, response.status, 'rate-limit');
                 return;
             }
 
             if (!response.ok) {
-                await recordFailure(authToken, response.status, 'rate-limit');
+                await recordFailure(filename, response.status, 'rate-limit');
                 return;
             }
 
             const data = await response.json();
-            const sso = extractSso(authToken);
-            if (sso) {
-                if (model === 'grok-4-heavy') {
-                    await updateLimits(sso, model, undefined, data.remainingQueries ?? -1);
-                } else {
-                    await updateLimits(sso, model, data.remainingTokens ?? -1, undefined);
-                }
+            if (model === 'grok-4-heavy') {
+                await updateLimits(filename, model, undefined, data.remainingQueries ?? -1);
+            } else {
+                await updateLimits(filename, model, data.remainingTokens ?? -1, undefined);
             }
             return;
         }
@@ -398,7 +319,7 @@ export async function buildPayload(request: any, authToken: string) {
 
 export async function grokRequest(request: any): Promise<GrokClientResult> {
     const model = request.model;
-    const { token: rawToken } = await selectToken(model);
+    const { token: rawToken, filename } = await selectToken(model);
     const authToken = buildAuthToken(rawToken);
     const headers = {
         ...getDynamicHeaders('/rest/app-chat/conversations/new'),
@@ -443,7 +364,7 @@ export async function grokRequest(request: any): Promise<GrokClientResult> {
                     await new Promise(resolve => setTimeout(resolve, 500));
                     continue;
                 }
-                await recordFailure(authToken, 403, 'blocked');
+                await recordFailure(filename, 403, 'blocked');
                 throw new Error('Grok request blocked (403)');
             }
 
@@ -452,19 +373,24 @@ export async function grokRequest(request: any): Promise<GrokClientResult> {
                     await new Promise(resolve => setTimeout(resolve, (outer + 1) * 100));
                     break;
                 }
-                await recordFailure(authToken, response.status, 'retryable');
+                await recordFailure(filename, response.status, 'retryable');
                 throw new Error(`Grok request failed: ${response.status}`);
             }
 
             if (!response.ok) {
-                await recordFailure(authToken, response.status, 'http_error');
+                await recordFailure(filename, response.status, 'http_error');
                 throw new Error(`Grok request failed: ${response.status}`);
             }
 
-            await resetFailure(authToken);
-            requestRateLimit(authToken, model).catch(() => null);
+            await resetFailure(filename);
+            
+            // Mark token as used to reset refresh timer
+            markTokenUsed(filename);
+            
+            // Request rate limit update in background
+            requestRateLimit(authToken, filename, model).catch(() => null);
 
-            return { response, token: authToken, model };
+            return { response, token: authToken, filename, model };
         }
     }
 

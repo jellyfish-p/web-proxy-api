@@ -18,10 +18,10 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const route = useRoute()
 
 // 定义不显示aside的页面列表
-const hideAsideRoutes = ['login']
+const hideAsideRoutes = ['/admin/login','/']
 
 const showAside = computed(() => {
-  return !hideAsideRoutes.includes(route.name as string)
+  return !hideAsideRoutes.includes(route.path as string)
 })
 
 const NavigationItems = ref<NavigationMenuItem[][]>([

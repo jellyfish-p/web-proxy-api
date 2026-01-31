@@ -33,7 +33,7 @@ accounts/**/*.json
 !accounts/**/example-account.json
 
 # Config with sensitive data
-config.yaml.local
+config.yaml
 
 
 # 系统本地保存令牌

@@ -2,7 +2,8 @@ import { projectRegistry, type ProjectHandler } from '../utils/project-registry'
 import { handleGrokRequest, handleGrokResponse } from '../projects/grok/handler';
 import { GrokModels } from '../utils/grok/models';
 import { configureGrokProxyPool } from '../utils/grok/proxy-pool';
-import { grokTokenStore } from '../utils/grok/token-store';
+import { initAccounts } from '../utils/grok/accounts';
+import { startTokenRefreshService } from '../utils/grok/token-refresh';
 import { getConfigValue } from '../utils/config';
 
 const grokHandler: ProjectHandler = {
@@ -23,8 +24,12 @@ export default defineNitroPlugin(async () => {
         return;
     }
 
-    await grokTokenStore.ensureLoaded();
+    await initAccounts();
     await configureGrokProxyPool();
+    
+    // Start automatic token refresh service
+    startTokenRefreshService();
+    
     projectRegistry.register('grok', grokHandler);
     console.log('✓ Grok project registered');
 });

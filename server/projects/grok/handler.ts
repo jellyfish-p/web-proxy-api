@@ -12,15 +12,15 @@ export async function handleGrokRequest(params: GrokHandlerParams) {
         throw new Error("Request must include 'model' and 'messages'.");
     }
 
-    const { response, token, model } = await grokRequest(body);
+    const { response, token, filename, model } = await grokRequest(body);
     return {
         response,
-        state: { token },
+        state: { token, filename },
         session_id: crypto.randomUUID(),
         model
     };
 }
 
-export async function handleGrokResponse(result: { response: Response; state: { token: string }; model: string }, stream: boolean) {
+export async function handleGrokResponse(result: { response: Response; state: { token: string; filename: string }; model: string }, stream: boolean) {
     return processGrokResponse(result.response, result.state.token, result.model, stream);
 }
