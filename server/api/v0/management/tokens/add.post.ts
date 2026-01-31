@@ -86,6 +86,10 @@ export default defineEventHandler(async (event) => {
         const filePath = resolve(accountsDir, filename);
         await writeFile(filePath, JSON.stringify(accountData, null, 2), 'utf-8');
 
+        // Invalidate cache for this project to pick up the new token
+        const { tokenCache } = await import('../../../../utils/token-cache');
+        tokenCache.invalidateProject(project);
+
         return {
             success: true,
             message: 'Token added successfully',

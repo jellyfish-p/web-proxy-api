@@ -101,7 +101,7 @@ const handleLogin = async (event: FormSubmitEvent<any>) => {
       icon: 'i-heroicons-check-circle'
     });
     // Use navigateTo with replace to avoid back button issues
-    await navigateTo('/admin', { replace: true });
+    await navigateTo('/dashboard', { replace: true });
   } else {
     toast.add({
       title: '登录失败',
@@ -116,7 +116,7 @@ const handleLogin = async (event: FormSubmitEvent<any>) => {
 onMounted(async () => {
   const isAuth = await checkAuth();
   if (isAuth) {
-    await navigateTo('/admin', { replace: true });
+    await navigateTo('/dashboard', { replace: true });
   }
 });
 </script>

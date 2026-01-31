@@ -38,3 +38,4 @@ config.yaml.local
 
 # 系统本地保存令牌
 accounts
+origin

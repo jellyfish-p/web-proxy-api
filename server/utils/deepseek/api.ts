@@ -1,7 +1,7 @@
 import { compute_pow_answer } from './wasm';
 import { resolve } from 'path';
 import { saveAccount, getAccountIdentifier } from './accounts';
-import { proxyFetch } from '../../../utils/proxy-fetch';
+import { proxyFetch } from '../proxy-fetch';
 
 const DEEPSEEK_HOST = "chat.deepseek.com";
 const DEEPSEEK_LOGIN_URL = `https://${DEEPSEEK_HOST}/api/v0/users/login`;

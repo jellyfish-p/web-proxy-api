@@ -7,11 +7,6 @@
                 </template>
 
                 <div class="space-y-4">
-                    <UFormField label="项目">
-                        <USelect :model-value="form.project" :items="projectOptions"
-                            @update:model-value="updateField('project', $event)" />
-                    </UFormField>
-
                     <UFormField label="类型">
                         <USelect :model-value="form.type" :items="[
                             { label: 'Session令牌', value: 'session' },
@@ -33,16 +28,8 @@
 
                     <!-- Password Type Fields -->
                     <template v-if="form.type === 'password'">
-                        <UFormField label="登录方式">
-                            <USelect :model-value="form.loginMethod" :items="[
-                                { label: '邮箱', value: 'email' },
-                                { label: '手机号', value: 'mobile' }
-                            ]" @update:model-value="updateField('loginMethod', $event)" />
-                        </UFormField>
-
-                        <UFormField :label="form.loginMethod === 'email' ? '邮箱' : '手机号'" required>
-                            <UInput :model-value="form.identifier"
-                                :placeholder="form.loginMethod === 'email' ? '输入邮箱' : '输入手机号'"
+                        <UFormField label="邮箱/手机号" required>
+                            <UInput :model-value="form.identifier" placeholder="输入邮箱或手机号"
                                 @update:model-value="updateField('identifier', $event)" />
                         </UFormField>
 
@@ -82,7 +69,6 @@
 export interface NewTokenForm {
     project: string;
     type: 'session' | 'password';
-    loginMethod: 'email' | 'mobile';
     identifier: string;
     password: string;
     token: string;

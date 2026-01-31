@@ -14,10 +14,6 @@
             </div>
         </template>
 
-        <div class="mb-4">
-            <USelect :model-value="currentProject" :items="projectOptions" @update:model-value="(value) => $emit('change-project', value as string)" />
-        </div>
-
         <div v-if="loading" class="flex justify-center py-8">
             <UIcon name="i-heroicons-arrow-path" class="animate-spin text-2xl" />
         </div>
@@ -52,13 +48,11 @@ defineProps<{
     tokens: string[];
     loading: boolean;
     currentProject: string;
-    projectOptions: Array<{ label: string; value: string }>;
 }>();
 
 defineEmits<{
     add: [];
     view: [token: string];
     delete: [token: string];
-    'change-project': [project: string];
 }>();
 </script>

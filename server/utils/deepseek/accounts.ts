@@ -1,7 +1,9 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { tokenCache } from '../token-cache';
 
-const ACCOUNTS_DIR = resolve(process.cwd(), 'accounts');
+const ACCOUNTS_DIR = resolve(process.cwd(), 'accounts/deepseek');
+const PROJECT_NAME = 'deepseek';
 
 export interface Account {
     email?: string;
@@ -18,23 +20,25 @@ const activeAccounts = new Set<string>();
 
 export async function initAccounts() {
     try {
-        const files = await readdir(ACCOUNTS_DIR);
-        const jsonFiles = files.filter(f => f.endsWith('.json'));
+        // Use token cache to get file list
+        const jsonFiles = await tokenCache.getTokenList(PROJECT_NAME);
         accountQueue = jsonFiles.sort(() => Math.random() - 0.5); // Shuffle
-        console.log(`Loaded ${accountQueue.length} accounts from ${ACCOUNTS_DIR}`);
+        console.log(`[DeepSeek] Loaded ${accountQueue.length} accounts from cache`);
+        
+        // Preload tokens into cache for better performance
+        await tokenCache.preloadProject(PROJECT_NAME);
     } catch (error) {
-        console.error(`Failed to initialize accounts: ${error}`);
+        console.error(`[DeepSeek] Failed to initialize accounts: ${error}`);
     }
 }
 
 export async function getAccount(identifier: string): Promise<Account | null> {
     try {
-        const filePath = resolve(ACCOUNTS_DIR, identifier); // identifier is filename for now? or should we scan?
-        // Let's assume the identifier in the queue IS the filename
-        const content = await readFile(filePath, 'utf-8');
-        return JSON.parse(content);
+        // Use token cache to get account data
+        const account = await tokenCache.getToken(PROJECT_NAME, identifier);
+        return account as Account | null;
     } catch (error) {
-        console.error(`Failed to load account ${identifier}: ${error}`);
+        console.error(`[DeepSeek] Failed to load account ${identifier}: ${error}`);
         return null;
     }
 }
@@ -43,8 +47,11 @@ export async function saveAccount(identifier: string, data: Account) {
     try {
         const filePath = resolve(ACCOUNTS_DIR, identifier);
         await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
+        
+        // Invalidate cache for this token
+        tokenCache.invalidateToken(PROJECT_NAME, identifier);
     } catch (error) {
-        console.error(`Failed to save account ${identifier}: ${error}`);
+        console.error(`[DeepSeek] Failed to save account ${identifier}: ${error}`);
     }
 }
 
@@ -61,20 +68,13 @@ export async function chooseNewAccount(excludeIds: string[] = []): Promise<{ id:
         await initAccounts();
     }
 
-    // Try to find an account not in excludeIds
     for (const filename of accountQueue) {
-        // We might need to load it to check the internal ID (email/mobile) if excludeIds uses that
-        // Or we can assume excludeIds uses the filename.
-        // The python code used `get_account_identifier` (email/mobile) for excludeIds.
-        
-        // Let's load it to be safe and consistent with Python logic which excludes by ID.
         const account = await getAccount(filename);
         if (!account) continue;
 
         const id = getAccountIdentifier(account);
         
         if (!excludeIds.includes(id)) {
-            // Found one
             return { id: filename, account };
         }
     }
@@ -83,8 +83,6 @@ export async function chooseNewAccount(excludeIds: string[] = []): Promise<{ id:
 }
 
 export function releaseAccount(filename: string) {
-    // In Python it re-appends to queue. Here we just keep it in the list.
-    // The choose logic iterates. If we want rotation, we can move it to the end.
     const index = accountQueue.indexOf(filename);
     if (index > -1) {
         accountQueue.splice(index, 1);

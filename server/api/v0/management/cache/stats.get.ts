@@ -4,24 +4,18 @@ import { tokenCache } from '../../../../utils/token-cache';
 export default defineEventHandler(async (event) => {
     requireAuth(event);
 
-    const query = getQuery(event);
-    const project = query.project as string;
-
     try {
-        // Use token cache to get file list
-        const jsonFiles = await tokenCache.getTokenList(project);
+        const stats = tokenCache.getStats();
 
         return {
             success: true,
-            project,
-            count: jsonFiles.length,
-            tokens: jsonFiles
+            stats
         };
     } catch (error: any) {
         throw createError({
             statusCode: 500,
             statusMessage: 'Internal Server Error',
-            message: `Failed to list tokens: ${error.message}`
+            message: `Failed to get cache stats: ${error.message}`
         });
     }
 });

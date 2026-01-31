@@ -3,15 +3,13 @@ import type { Ref } from 'vue';
 export interface TokenData {
     token?: string;
     device_id?: string;
-    email?: string;
-    mobile?: string;
+    account?: string;
     password?: string;
 }
 
 export interface NewTokenForm {
     project: string;
     type: 'session' | 'password';
-    loginMethod: 'email' | 'mobile';
     identifier: string;
     password: string;
     token: string;
@@ -49,11 +47,7 @@ export const useTokens = (currentProject: Ref<string>) => {
         };
 
         if (tokenForm.type === 'password') {
-            if (tokenForm.loginMethod === 'email') {
-                data.email = tokenForm.identifier;
-            } else {
-                data.mobile = tokenForm.identifier;
-            }
+            data.account = tokenForm.identifier;
             data.password = tokenForm.password;
         }
 

@@ -20,6 +20,10 @@ export default defineEventHandler(async (event) => {
         const filePath = resolve(process.cwd(), 'accounts', project, filename);
         await unlink(filePath);
 
+        // Invalidate cache for this token
+        const { tokenCache } = await import('../../../../utils/token-cache');
+        tokenCache.invalidateToken(project, filename);
+
         return {
             success: true,
             message: 'Token deleted successfully',

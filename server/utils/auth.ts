@@ -1,9 +1,20 @@
-import { H3Event } from 'h3';
+import { H3Event, getRequestHeader, getRequestURL } from 'h3';
 import { getConfigValue } from './config';
 import { verifyPassword } from './crypto';
 
 const SESSION_COOKIE_NAME = 'admin_session';
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+const isSecureRequest = (event: H3Event): boolean => {
+    const forwardedProto = getRequestHeader(event, 'x-forwarded-proto');
+    if (forwardedProto) {
+        const firstProto = forwardedProto.split(',')[0]?.trim();
+        return firstProto === 'https';
+    }
+
+    const requestUrl = getRequestURL(event);
+    return requestUrl.protocol === 'https:';
+};
 
 // In-memory session store (for production, use Redis or database)
 const sessions = new Map<string, { username: string; expiresAt: number }>();
@@ -69,7 +80,7 @@ export function getSessionFromEvent(event: H3Event): string | null {
 export function setSessionCookie(event: H3Event, sessionId: string): void {
     setCookie(event, SESSION_COOKIE_NAME, sessionId, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isSecureRequest(event),
         sameSite: 'lax',
         maxAge: SESSION_DURATION / 1000,
         path: '/'

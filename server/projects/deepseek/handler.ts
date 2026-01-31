@@ -3,7 +3,7 @@ import {
     getAccountIdentifier,
     releaseAccount,
     initAccounts,
-} from './utils/accounts';
+} from '../../utils/deepseek/accounts';
 import {
     type RequestState,
     DEEPSEEK_COMPLETION_URL,
@@ -11,7 +11,7 @@ import {
     create_session,
     get_pow_response,
     login_deepseek_via_account,
-} from './utils/api';
+} from '../../utils/deepseek/api';
 import { getConfigValue } from '../../utils/config';
 import { proxyFetch } from '../../utils/proxy-fetch';
 
