@@ -1,3 +1,5 @@
+// #imports is a Nuxt auto-import alias that provides type-safe access to auto-imported composables
+import { ref, useToast } from '#imports';
 import type { Ref } from 'vue';
 
 export interface TokenData {
@@ -5,11 +7,12 @@ export interface TokenData {
     device_id?: string;
     account?: string;
     password?: string;
+    tokens?: string[];
 }
 
 export interface NewTokenForm {
     project: string;
-    type: 'session' | 'password';
+    type: 'session' | 'password' | 'ssoNormal' | 'ssoSuper';
     identifier: string;
     password: string;
     token: string;
@@ -41,6 +44,7 @@ export const useTokens = (currentProject: Ref<string>) => {
     };
 
     const addToken = async (tokenForm: NewTokenForm) => {
+        const isGrok = tokenForm.project === 'grok';
         const data: TokenData = {
             token: tokenForm.token,
             device_id: tokenForm.device_id
@@ -56,7 +60,9 @@ export const useTokens = (currentProject: Ref<string>) => {
             body: {
                 project: tokenForm.project,
                 type: tokenForm.type,
-                data
+                data: isGrok
+                    ? { tokens: tokenForm.token }
+                    : data
             }
         });
 
@@ -79,12 +85,13 @@ export const useTokens = (currentProject: Ref<string>) => {
         return response.data;
     };
 
-    const deleteToken = async (filename: string) => {
+    const deleteToken = async (filename: string, options?: { type?: 'ssoNormal' | 'ssoSuper'; token?: string }) => {
         await $fetch('/api/v0/management/tokens/delete', {
             method: 'POST',
             body: {
                 project: currentProject.value,
-                filename
+                filename,
+                ...options
             }
         });
 

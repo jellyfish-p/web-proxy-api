@@ -10,6 +10,25 @@ keys:
 projects:
   deepseek:
     enabled: true
+  grok:
+    enabled: true
+
+grok:
+  base_url: ""
+  x_statsig_id: ""
+  dynamic_statsig: false
+  temporary: false
+  proxy_url: ""
+  proxy_pool_url: ""
+  proxy_pool_interval: 300
+  retry_status_codes:
+    - 401
+    - 429
+  filtered_tags: "xaiartifact,xai:tool_usage_card,grok:render"
+  show_thinking: true
+  image_mode: "url"
+  image_cache_max_size_mb: 500
+  video_cache_max_size_mb: 500
 logging:
   level: info
   format: json

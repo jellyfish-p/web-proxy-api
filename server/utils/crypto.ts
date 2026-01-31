@@ -53,6 +53,11 @@ export function verifyPassword(inputPassword: string, storedPassword: string): b
 
     const [salt, storedHash] = parts;
     
+    if (!salt || !storedHash) {
+        console.error('Invalid encrypted password format: missing salt or hash');
+        return false;
+    }
+    
     // 使用相同的盐值和参数对输入密码进行哈希
     const inputHash = pbkdf2Sync(inputPassword, salt, 100000, 64, 'sha512').toString('hex');
     

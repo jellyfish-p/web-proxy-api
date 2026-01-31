@@ -38,6 +38,10 @@ export default defineEventHandler(async (event) => {
             body
         });
 
+        if (handler.processResponse) {
+            return await handler.processResponse({ event, request: body, result });
+        }
+
         const { response: dsResponse, state, session_id, model: responseModel, thinking_enabled, search_enabled } = result;
         const createdTime = Math.floor(Date.now() / 1000);
         const completionId = `${session_id}`;

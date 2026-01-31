@@ -1,3 +1,5 @@
+import { useState } from '#imports';
+
 export const useAuth = () => {
     const isAuthenticated = useState('isAuthenticated', () => false);
     const isLoading = useState('authLoading', () => false);

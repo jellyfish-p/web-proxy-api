@@ -1,3 +1,5 @@
+import { ref } from '#imports';
+
 export const useModalState = () => {
     const showAddTokenModal = ref(false);
     const showViewTokenModal = ref(false);

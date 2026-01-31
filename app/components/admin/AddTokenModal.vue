@@ -8,10 +8,8 @@
 
                 <div class="space-y-4">
                     <UFormField label="类型">
-                        <USelect :model-value="form.type" :items="[
-                            { label: 'Session令牌', value: 'session' },
-                            { label: '账号密码', value: 'password' }
-                        ]" @update:model-value="updateField('type', $event)" />
+                        <USelect :model-value="form.type" :items="typeOptions"
+                            @update:model-value="updateField('type', $event)" />
                     </UFormField>
 
                     <!-- Session Type Fields -->
@@ -48,6 +46,14 @@
                                 @update:model-value="updateField('device_id', $event)" />
                         </UFormField>
                     </template>
+
+                    <!-- Grok Token Fields -->
+                    <template v-if="form.type === 'ssoNormal' || form.type === 'ssoSuper'">
+                        <UFormField label="SSO Token" required>
+                            <UTextarea :model-value="form.token" placeholder="输入一行一个或逗号分隔"
+                                @update:model-value="updateField('token', $event)" />
+                        </UFormField>
+                    </template>
                 </div>
 
                 <template #footer>
@@ -68,7 +74,7 @@
 <script setup lang="ts">
 export interface NewTokenForm {
     project: string;
-    type: 'session' | 'password';
+    type: 'session' | 'password' | 'ssoNormal' | 'ssoSuper';
     identifier: string;
     password: string;
     token: string;
@@ -87,6 +93,19 @@ const emit = defineEmits<{
     submit: [];
     cancel: [];
 }>();
+
+const typeOptions = computed(() => {
+    if (form.value.project === 'grok') {
+        return [
+            { label: 'SSO Normal', value: 'ssoNormal' },
+            { label: 'SSO Super', value: 'ssoSuper' }
+        ];
+    }
+    return [
+        { label: 'Session令牌', value: 'session' },
+        { label: '账号密码', value: 'password' }
+    ];
+});
 
 const updateField = (field: keyof NewTokenForm, value: any) => {
     form.value = { ...form.value, [field]: value };

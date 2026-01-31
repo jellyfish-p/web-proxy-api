@@ -1,4 +1,4 @@
-import type { Ref } from 'vue';
+import { ref, computed, useToast } from '#imports';
 
 export interface Project {
     name: string;
@@ -13,7 +13,7 @@ export const useProjects = () => {
     const currentProject = ref('deepseek');
 
     const projectOptions = computed(() =>
-        projects.value.map(p => ({ label: p.name, value: p.name }))
+        projects.value.map((p: Project) => ({ label: p.name, value: p.name }))
     );
 
     const loadProjects = async () => {

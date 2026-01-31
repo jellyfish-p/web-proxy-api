@@ -8,6 +8,15 @@ export default defineEventHandler(async (event) => {
     const project = query.project as string;
 
     try {
+        if (project === 'grok') {
+            return {
+                success: true,
+                project,
+                count: 1,
+                tokens: ['token.json']
+            };
+        }
+
         // Use token cache to get file list
         const jsonFiles = await tokenCache.getTokenList(project);
 

@@ -166,6 +166,8 @@ keys:
 projects:
   deepseek:
     enabled: true
+  grok:
+    enabled: true
   # 添加更多项目...
 
 logging:
@@ -263,6 +265,27 @@ curl http://localhost:3000/v1/chat/completions \
 - PoW (Proof of Work) 计算
 - 支持推理过程输出
 - 支持搜索功能
+
+### Grok
+
+**支持的模型:**
+- `grok-4.1`: 最新 Grok 4.1 模型
+- `grok-4.1-thinking`: Grok 4.1 思考模型
+- `grok-4-fast`: 快速 Grok 4 模型
+- `grok-4-fast-expert`: Grok 4 快速专家模式
+- `grok-4-expert`: Grok 4 专家模式
+- `grok-4-heavy`: Grok 4 重型模型（需要 Super Token）
+- `grok-3-fast`: Grok 3 快速模型
+- `grok-imagine-0.9`: 图像和视频生成模型
+
+**特性:**
+- SSO Token 管理（ssoNormal/ssoSuper）
+- 动态 Statsig ID 生成
+- 代理池支持
+- 图像和视频生成
+- 图像/视频缓存
+- 流式响应
+- 重试机制
 
 ## 添加新项目
 

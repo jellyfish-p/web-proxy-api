@@ -1,6 +1,7 @@
 import { requireAuth } from '../../../../utils/auth';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import type { GrokTokenType } from '../../../../utils/grok/models';
 
 export default defineEventHandler(async (event) => {
     requireAuth(event);
@@ -16,16 +17,68 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    // Validate type
-    if (!['session', 'password'].includes(type)) {
-        throw createError({
-            statusCode: 400,
-            statusMessage: 'Bad Request',
-            message: 'Type must be either "session" or "password"'
-        });
-    }
-
     try {
+        if (project === 'grok') {
+            if (!['ssoNormal', 'ssoSuper'].includes(type)) {
+                throw createError({
+                    statusCode: 400,
+                    statusMessage: 'Bad Request',
+                    message: 'Type must be either "ssoNormal" or "ssoSuper"'
+                });
+            }
+
+            const rawTokens = Array.isArray(data.tokens)
+                ? data.tokens
+                : typeof data.tokens === 'string'
+                    ? data.tokens.split(/\r?\n|,/) : typeof data.token === 'string'
+                        ? data.token.split(/\r?\n|,/) : [];
+
+            const tokens = rawTokens.map((t: string) => t.trim()).filter(Boolean);
+            if (tokens.length === 0) {
+                throw createError({
+                    statusCode: 400,
+                    statusMessage: 'Bad Request',
+                    message: 'Token list is required for grok'
+                });
+            }
+
+            const { grokTokenStore } = await import('../../../../utils/grok/token-store');
+            const store = await grokTokenStore.getData();
+
+            for (const token of tokens) {
+                store[type as GrokTokenType][token] = {
+                    createdTime: Date.now(),
+                    remainingQueries: -1,
+                    heavyremainingQueries: -1,
+                    status: 'active',
+                    failedCount: 0,
+                    lastFailureTime: null,
+                    lastFailureReason: null,
+                    tags: [],
+                    note: ''
+                };
+            }
+
+            await grokTokenStore.setData(store);
+
+            return {
+                success: true,
+                message: `Added ${tokens.length} Grok tokens`,
+                filename: 'token.json',
+                project,
+                count: tokens.length
+            };
+        }
+
+        // Validate type
+        if (!['session', 'password'].includes(type)) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: 'Bad Request',
+                message: 'Type must be either "session" or "password"'
+            });
+        }
+
         const accountsDir = resolve(process.cwd(), 'accounts', project);
         
         // Ensure directory exists

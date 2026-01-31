@@ -6,7 +6,7 @@
                     <h3 class="text-lg font-semibold text-red-600">确认删除</h3>
                 </template>
 
-                <p>确定要删除令牌 <span class="font-mono">{{ tokenName }}</span> 吗？此操作不可恢复。</p>
+                <p>确定要删除令牌 <span class="font-mono break-all">{{ tokenName }}</span> 吗？此操作不可恢复。</p>
 
                 <template #footer>
                     <div class="flex justify-end gap-2">

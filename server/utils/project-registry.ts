@@ -15,6 +15,19 @@ export interface ProjectHandler {
         model: string;
         [key: string]: any;
     }>;
+
+    // 可选：自定义响应处理（流式/非流式）
+    processResponse?: (params: {
+        event: any;
+        request: any;
+        result: {
+            response: Response;
+            state: any;
+            session_id: string;
+            model: string;
+            [key: string]: any;
+        };
+    }) => Promise<any>;
     
     // 释放资源（如账号）
     releaseResources?: (state: any) => void;

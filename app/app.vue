@@ -42,6 +42,10 @@ const NavigationItems = ref<NavigationMenuItem[][]>([
         {
           label: 'deepseek',
           to: '/projects/deepseek'
+        },
+        {
+          label: 'grok',
+          to: '/projects/grok'
         }
       ]
     },

@@ -17,6 +17,17 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
+        if (project === 'grok' && filename === 'token.json') {
+            const { grokTokenStore } = await import('../../../../utils/grok/token-store');
+            const data = await grokTokenStore.getData();
+            return {
+                success: true,
+                project,
+                filename,
+                data
+            };
+        }
+
         // Use token cache to get token data
         const data = await tokenCache.getToken(project, filename);
 
