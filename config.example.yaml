@@ -1,0 +1,20 @@
+# 配置文件示例
+# 复制此文件为 config.yaml 并填入实际配置
+
+dashboard:
+  enable: true
+  password: "your-dashboard-password"
+
+projects:
+  deepseek:
+    # DeepSeek 相关配置
+  grok:
+    # Grok 相关配置
+  claude:
+    # Claude 相关配置
+  kimi:
+    # Kimi 相关配置
+
+keys:
+  - "your-api-key-1"
+  - "your-api-key-2"
