@@ -62,6 +62,13 @@ async function loadAccounts(): Promise<ProjectAccounts> {
     }
 }
 
+function getAccounts(project?: string) {
+    if (project) {
+        if (!cachedAccounts) return []
+        return cachedAccounts[project] || []
+    }
+    return cachedAccounts || {}
+}
 
-export { loadAccounts }
+export { loadAccounts, getAccounts }
 export type { ProjectAccounts }
