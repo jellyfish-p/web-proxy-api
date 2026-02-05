@@ -9,3 +9,7 @@ web-proxy-api(简称WPA)是一个基于nuxt的web逆向管理项目。
 - [ ] [DeepSeek](https://chat.deepseek.com)
 - [ ] [Grok](https://grok.com)
 - [ ] [Kimi](https://kimi.com)
+- [ ] [Claude](https://claude.ai)
+- [ ] [ChatGPT](https://chatgpt.com)
+- [ ] [Gemini](https://gemini.google.com)
+- [ ] [Dreamine](dreamina.capcut.com)
