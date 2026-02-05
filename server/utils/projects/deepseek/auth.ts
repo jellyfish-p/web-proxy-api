@@ -1,41 +1,70 @@
+// 导入文件系统操作模块
 import { writeFile } from "fs/promises"
 import { join } from "path"
+// 导入账号管理函数
 import { getAccountsWithFiles } from "../../accounts"
+// 导入 DeepSeek 相关常量
 import { DEEPSEEK_BASE_HEADERS, DEEPSEEK_LOGIN_URL } from "./const"
 
+// DeepSeek 账号类型定义
 type DeepseekAccount = {
-  email?: string
-  mobile?: string
-  password?: string
-  token?: string
-  type?: string
-  fileName?: string
+  email?: string      // 邮箱地址
+  mobile?: string     // 手机号码
+  password?: string   // 密码
+  token?: string      // 认证令牌
+  type?: string       // 账号类型
+  fileName?: string   // 账号文件名
 }
 
+// 账号目录路径
 const accountsDir = "./accounts"
 
+/**
+ * 判断是否为手机号
+ * @param username 用户名
+ * @returns 如果是手机号返回 true，否则返回 false
+ */
 const isMobile = (username: string) => {
   const mobileRegex = /^1[3-9]\d{9}$/
   return mobileRegex.test(username)
 }
 
+/**
+ * 获取账号标识符
+ * 优先返回邮箱，如果没有邮箱则返回手机号
+ * @param account DeepSeek 账号对象
+ * @returns 账号标识符（邮箱或手机号）
+ */
 const getAccountIdentifier = (account: DeepseekAccount) => {
   const email = account.email?.trim() ?? ""
   const mobile = account.mobile?.trim() ?? ""
   return email || mobile
 }
 
+/**
+ * 规范化账号文件名
+ * 确保文件名以 .json 结尾
+ * @param fileName 文件名
+ * @returns 规范化后的文件名
+ */
 const normalizeAccountFileName = (fileName: string) => {
   if (fileName.endsWith(".json")) return fileName
   return `${fileName}.json`
 }
 
+/**
+ * 查找账号条目
+ * 根据文件名或账号标识符查找对应的账号条目
+ * @param account DeepSeek 账号对象
+ * @returns 账号条目对象，如果未找到则返回 null
+ */
 const findAccountEntry = (account: DeepseekAccount) => {
   const entries = getAccountsWithFiles("deepseek")
   if (!Array.isArray(entries) || entries.length === 0) {
     return null
   }
 
+  // 如果提供了文件名，优先按文件名查找
   if (account.fileName) {
     const normalized = normalizeAccountFileName(account.fileName)
     return (
@@ -44,6 +73,7 @@ const findAccountEntry = (account: DeepseekAccount) => {
     )
   }
 
+  // 否则按账号标识符（邮箱或手机号）查找
   const accountId = getAccountIdentifier(account)
   if (!accountId) return null
 
@@ -56,6 +86,12 @@ const findAccountEntry = (account: DeepseekAccount) => {
   )
 }
 
+/**
+ * 保存账号到文件
+ * 将更新后的账号信息保存到对应的 JSON 文件
+ * @param account DeepSeek 账号对象
+ * @returns 保存成功返回 true，否则返回 false
+ */
 const saveAccountToFile = async (account: DeepseekAccount) => {
   const entry = findAccountEntry(account)
   if (!entry) {
@@ -78,6 +114,13 @@ const saveAccountToFile = async (account: DeepseekAccount) => {
   }
 }
 
+/**
+ * 构建登录请求载荷
+ * 根据账号信息构建登录 API 所需的请求体
+ * @param account DeepSeek 账号对象
+ * @returns 登录请求载荷对象
+ * @throws 如果账号信息不完整则抛出错误
+ */
 const buildLoginPayload = (account: DeepseekAccount) => {
   const email = account.email?.trim() ?? ""
   const mobile = account.mobile?.trim() ?? ""
@@ -87,6 +130,7 @@ const buildLoginPayload = (account: DeepseekAccount) => {
     throw new Error("账号缺少必要的登录信息（必须提供 email 或 mobile 以及 password）")
   }
 
+  // 如果提供了邮箱，使用邮箱登录
   if (email) {
     return {
       email,
@@ -96,6 +140,7 @@ const buildLoginPayload = (account: DeepseekAccount) => {
     }
   }
 
+  // 否则使用手机号登录
   if (!isMobile(mobile)) {
     throw new Error("手机号格式不正确")
   }
@@ -109,6 +154,13 @@ const buildLoginPayload = (account: DeepseekAccount) => {
   }
 }
 
+/**
+ * 解析登录响应
+ * 从登录 API 响应中提取认证令牌
+ * @param response 登录 API 响应对象
+ * @returns 认证令牌字符串
+ * @throws 如果响应格式不正确或缺少令牌则抛出错误
+ */
 const parseLoginResponse = async (response: Response) => {
   let data: Record<string, any>
   try {
@@ -138,6 +190,13 @@ const parseLoginResponse = async (response: Response) => {
   return token as string
 }
 
+/**
+ * 使用账号登录 DeepSeek
+ * 发送登录请求并保存获取的认证令牌
+ * @param account DeepSeek 账号对象
+ * @returns 认证令牌字符串
+ * @throws 如果登录失败则抛出错误
+ */
 async function loginDeepseekViaAccount(account: DeepseekAccount) {
   const payload = buildLoginPayload(account)
 
@@ -166,6 +225,13 @@ async function loginDeepseekViaAccount(account: DeepseekAccount) {
   return token
 }
 
+/**
+ * 使用用户名和密码登录
+ * 根据用户名格式（邮箱或手机号）自动选择登录方式
+ * @param username 用户名（邮箱或手机号）
+ * @param password 密码
+ * @returns 认证令牌字符串
+ */
 async function LoginWithPassword(username: string, password: string) {
   const account: DeepseekAccount = username.includes("@")
     ? { email: username, password }
@@ -173,5 +239,7 @@ async function LoginWithPassword(username: string, password: string) {
   return await loginDeepseekViaAccount(account)
 }
 
+// 导出登录相关函数
 export { LoginWithPassword, loginDeepseekViaAccount }
+// 导出类型定义
 export type { DeepseekAccount }

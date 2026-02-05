@@ -1,24 +1,37 @@
+// 账号类型定义
 type Account = {
-  inUse: boolean
-  fileName: string
+  inUse: boolean      // 账号是否正在使用中
+  fileName: string    // 账号文件名
 }
 
+// 模型状态类型定义
 type ModelState = {
-  order: string[]
-  cursor: number
-  skippedUntil: Map<string, number>
+  order: string[]                    // 账号轮询顺序
+  cursor: number                     // 当前轮询位置
+  skippedUntil: Map<string, number>  // 账号跳过时间映射（文件名 -> 跳过截止时间戳）
 }
 
+// 模型元数据类型定义
 type ModelMeta = {
-  owner: string
-  created: number
+  owner: string    // 模型所有者
+  created: number  // 创建时间戳
 }
 
+// 已注册的账号列表
 const registeredAccounts: Account[] = []
+// 账号映射表（文件名 -> 账号对象）
 const accountMap = new Map<string, Account>()
+// 模型状态映射表（模型名 -> 模型状态）
 const modelStates = new Map<string, ModelState>()
+// 模型元数据映射表（模型名 -> 模型元数据）
 const modelMeta = new Map<string, ModelMeta>()
 
+/**
+ * 确保模型状态存在
+ * 如果模型状态不存在则创建新的状态对象
+ * @param model 模型名称
+ * @returns 模型状态对象
+ */
 function ensureModelState(model: string): ModelState {
   const existing = modelStates.get(model)
   if (existing) {
@@ -33,6 +46,11 @@ function ensureModelState(model: string): ModelState {
   return state
 }
 
+/**
+ * 添加或更新账号
+ * 如果账号已存在则不做任何操作
+ * @param account 账号文件名
+ */
 function upsertAccount(account: string) {
   if (accountMap.has(account)) {
     return
@@ -42,10 +60,19 @@ function upsertAccount(account: string) {
   accountMap.set(account, item)
 }
 
+/**
+ * 注册账号到指定模型
+ * 将账号添加到模型的轮询列表中
+ * @param accounts 账号文件名数组
+ * @param models 模型名称数组
+ * @param owner 模型所有者
+ */
 function registerAccount(accounts: string[], models: string[], owner: string) {
+  // 确保所有账号都已注册
   for (const account of accounts) {
     upsertAccount(account)
   }
+  // 将账号添加到每个模型的轮询列表
   for (const model of models) {
     const state = ensureModelState(model)
     for (const account of accounts) {
@@ -53,6 +80,7 @@ function registerAccount(accounts: string[], models: string[], owner: string) {
         state.order.push(account)
       }
     }
+    // 设置或更新模型元数据
     const existingMeta = modelMeta.get(model)
     if (!existingMeta) {
       modelMeta.set(model, { owner, created: Date.now() })
@@ -62,6 +90,13 @@ function registerAccount(accounts: string[], models: string[], owner: string) {
   }
 }
 
+/**
+ * 检查账号是否被跳过
+ * @param state 模型状态
+ * @param fileName 账号文件名
+ * @param now 当前时间戳
+ * @returns 如果账号被跳过返回 true，否则返回 false
+ */
 function isSkipped(state: ModelState, fileName: string, now: number) {
   const until = state.skippedUntil.get(fileName)
   if (!until) return false
@@ -72,6 +107,12 @@ function isSkipped(state: ModelState, fileName: string, now: number) {
   return true
 }
 
+/**
+ * 选择一个可用的账号
+ * 使用轮询算法选择下一个可用的账号（跳过正在使用和被临时跳过的账号）
+ * @param model 模型名称
+ * @returns 可用的账号对象，如果没有可用账号则返回 null
+ */
 function selectAccount(model: string): Account | null {
   const state = ensureModelState(model)
   if (state.order.length === 0) return null
@@ -80,6 +121,7 @@ function selectAccount(model: string): Account | null {
   const total = state.order.length
   let scanned = 0
 
+  // 轮询查找可用账号
   while (scanned < total) {
     const index = state.cursor % total
     const fileName = state.order[index]!
@@ -91,6 +133,7 @@ function selectAccount(model: string): Account | null {
     if (account.inUse) continue
     if (isSkipped(state, fileName, now)) continue
 
+    // 标记账号为使用中
     account.inUse = true
     return account
   }
@@ -98,23 +141,44 @@ function selectAccount(model: string): Account | null {
   return null
 }
 
+/**
+ * 释放账号
+ * 将账号标记为可用状态
+ * @param fileName 账号文件名
+ */
 function releaseAccount(fileName: string) {
   const account = accountMap.get(fileName)
   if (!account) return
   account.inUse = false
 }
 
+/**
+ * 跳过账号
+ * 将账号临时标记为不可用，在指定时间后自动恢复
+ * @param model 模型名称
+ * @param fileName 账号文件名
+ * @param durationMs 跳过持续时间（毫秒），默认 30 秒
+ */
 function skipAccount(model: string, fileName: string, durationMs = 30_000) {
   const state = ensureModelState(model)
   const until = Date.now() + Math.max(0, durationMs)
   state.skippedUntil.set(fileName, until)
 }
 
+/**
+ * 清除账号的跳过状态
+ * @param model 模型名称
+ * @param fileName 账号文件名
+ */
 function clearSkip(model: string, fileName: string) {
   const state = ensureModelState(model)
   state.skippedUntil.delete(fileName)
 }
 
+/**
+ * 获取所有已注册的模型
+ * @returns 模型信息数组
+ */
 function getRegisteredModels() {
   return Array.from(modelMeta.entries()).map(([id, meta]) => ({
     id,
@@ -123,6 +187,7 @@ function getRegisteredModels() {
   }))
 }
 
+// 导出账号选择器相关函数
 export {
   registerAccount,
   selectAccount,
@@ -131,4 +196,5 @@ export {
   clearSkip,
   getRegisteredModels
 }
+// 导出类型定义
 export type { Account }

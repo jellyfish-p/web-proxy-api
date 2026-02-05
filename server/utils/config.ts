@@ -1,16 +1,21 @@
+// 导入文件系统操作相关模块
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
+// 导入 YAML 解析和序列化模块
 import { parse, stringify } from 'yaml'
 
+// 配置文件类型定义
 type Config = {
+  // 仪表板配置
   dashboard: {
-    enable: boolean
-    password: string
+    enable: boolean    // 是否启用仪表板
+    password: string   // 仪表板密码
   }
+  // 项目配置（可选）
   projects?: {
-    [key: string]: object
+    [key: string]: object  // 项目名称到配置对象的映射
   }
-  keys: [string]
+  keys: [string]  // API 密钥列表
 
 }
 
@@ -68,13 +73,15 @@ async function saveConfig(config: Config): Promise<boolean> {
 
 /**
  * 检查 API Key 是否存在
- * @param apiKey key
- * @returns if key exists
+ * @param apiKey 要检查的 API 密钥
+ * @returns 如果密钥存在返回 true，否则返回 false
  */
 function CheckApiKey(apiKey: string): boolean {
   if (cachedConfig && cachedConfig.keys.includes(apiKey)) return true
   return false
 }
 
+// 导出所有配置相关函数
 export { loadConfig, getConfig, reloadConfig, saveConfig, CheckApiKey }
+// 导出配置类型
 export type { Config }

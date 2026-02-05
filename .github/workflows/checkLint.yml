@@ -1,9 +1,9 @@
-name: ci
+name: checkLint
 
 on: push
 
 jobs:
-  ci:
+  checkLint:
     runs-on: ${{ matrix.os }}
 
     strategy:
