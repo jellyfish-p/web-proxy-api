@@ -16,6 +16,14 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-01-15',
+  nitro: {
+    preset: 'bun',
+    externals: {
+      external: [
+        'bun'
+      ]
+    }
+  },
 
   eslint: {
     config: {
@@ -23,14 +31,6 @@ export default defineNuxtConfig({
         commaDangle: 'never',
         braceStyle: '1tbs'
       }
-    }
-  },
-  nitro: {
-    preset: 'bun',
-    externals: {
-      external: [
-        'bun'
-      ]
     }
   }
 })
