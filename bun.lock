@@ -4,6 +4,7 @@
     "": {
       "name": "web-proxy-api",
       "dependencies": {
+        "@huggingface/tokenizers": "^0.1.1",
         "@iconify-json/lucide": "^1.2.87",
         "@iconify-json/simple-icons": "^1.2.68",
         "@nuxt/ui": "^4.4.0",
@@ -186,6 +187,8 @@
     "@floating-ui/utils": ["@floating-ui/utils@0.2.10", "https://mirrors.huaweicloud.com/repository/npm/@floating-ui/utils/-/utils-0.2.10.tgz", {}, "sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ=="],
 
     "@floating-ui/vue": ["@floating-ui/vue@1.1.10", "https://mirrors.huaweicloud.com/repository/npm/@floating-ui/vue/-/vue-1.1.10.tgz", { "dependencies": { "@floating-ui/dom": "^1.7.5", "@floating-ui/utils": "^0.2.10", "vue-demi": ">=0.13.0" } }, "sha512-vdf8f6rHnFPPLRsmL4p12wYl+Ux4mOJOkjzKEMYVnwdf7UFdvBtHlLvQyx8iKG5vhPRbDRgZxdtpmyigDPjzYg=="],
+
+    "@huggingface/tokenizers": ["@huggingface/tokenizers@0.1.1", "https://mirrors.huaweicloud.com/repository/npm/@huggingface/tokenizers/-/tokenizers-0.1.1.tgz", {}, "sha512-hNVdOq4kAONjz9FqL6agX1vfpJ57Z9cUDQSVSqRMLT1x31y84XbOXDw2WdxCUiseizA+LEHehwwLLkGsyu8iXQ=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "https://mirrors.huaweicloud.com/repository/npm/@humanfs/core/-/core-0.19.1.tgz", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 

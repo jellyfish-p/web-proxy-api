@@ -66,5 +66,15 @@ async function saveConfig(config: Config): Promise<boolean> {
   }
 }
 
-export { loadConfig, getConfig, reloadConfig, saveConfig }
+/**
+ * 检查 API Key 是否存在
+ * @param apiKey key
+ * @returns if key exists
+ */
+function CheckApiKey(apiKey: string): boolean {
+  if (cachedConfig && cachedConfig.keys.includes(apiKey)) return true
+  return false
+}
+
+export { loadConfig, getConfig, reloadConfig, saveConfig, CheckApiKey }
 export type { Config }

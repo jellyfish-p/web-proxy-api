@@ -9,9 +9,15 @@ type ModelState = {
   skippedUntil: Map<string, number>
 }
 
+type ModelMeta = {
+  owner: string
+  created: number
+}
+
 const registeredAccounts: Account[] = []
 const accountMap = new Map<string, Account>()
 const modelStates = new Map<string, ModelState>()
+const modelMeta = new Map<string, ModelMeta>()
 
 function ensureModelState(model: string): ModelState {
   const existing = modelStates.get(model)
@@ -36,7 +42,7 @@ function upsertAccount(account: string) {
   accountMap.set(account, item)
 }
 
-function registerAccount(accounts: string[], models: string[]) {
+function registerAccount(accounts: string[], models: string[], owner: string) {
   for (const account of accounts) {
     upsertAccount(account)
   }
@@ -46,6 +52,12 @@ function registerAccount(accounts: string[], models: string[]) {
       if (!state.order.includes(account)) {
         state.order.push(account)
       }
+    }
+    const existingMeta = modelMeta.get(model)
+    if (!existingMeta) {
+      modelMeta.set(model, { owner, created: Date.now() })
+    } else if (existingMeta.owner !== owner && owner) {
+      existingMeta.owner = owner
     }
   }
 }
@@ -103,11 +115,20 @@ function clearSkip(model: string, fileName: string) {
   state.skippedUntil.delete(fileName)
 }
 
+function getRegisteredModels() {
+  return Array.from(modelMeta.entries()).map(([id, meta]) => ({
+    id,
+    owner: meta.owner,
+    created: meta.created
+  }))
+}
+
 export {
   registerAccount,
   selectAccount,
   releaseAccount,
   skipAccount,
-  clearSkip
+  clearSkip,
+  getRegisteredModels
 }
 export type { Account }

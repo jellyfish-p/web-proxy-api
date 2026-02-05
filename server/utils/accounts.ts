@@ -3,11 +3,20 @@ import { join } from 'path'
 
 type ProjectAccounts = Record<string, string[]>
 
+type AccountEntry<T = any> = {
+  fileName: string
+  data: T
+}
+
+type ProjectAccountEntries = Record<string, AccountEntry[]>
+
 let cachedAccounts: ProjectAccounts | null = null
+let cachedAccountEntries: ProjectAccountEntries | null = null
 
 async function loadAccounts(): Promise<ProjectAccounts> {
   const accountsDir = './accounts'
   const accounts: ProjectAccounts = {}
+  const accountsWithFiles: ProjectAccountEntries = {}
 
   try {
     // 检查目录是否存在
@@ -41,6 +50,11 @@ async function loadAccounts(): Promise<ProjectAccounts> {
             accounts[projectType] = []
           }
           accounts[projectType]!.push(accountData)
+
+          if (!accountsWithFiles[projectType]) {
+            accountsWithFiles[projectType] = []
+          }
+          accountsWithFiles[projectType]!.push({ fileName: file, data: accountData })
         }
       } catch (error) {
         console.error(`❌ Failed to load account file ${file}:`, error)
@@ -54,6 +68,7 @@ async function loadAccounts(): Promise<ProjectAccounts> {
     }
 
     cachedAccounts = accounts
+    cachedAccountEntries = accountsWithFiles
     return accounts
   } catch (error) {
     console.error('❌ Failed to load accounts:', error)
@@ -69,5 +84,13 @@ function getAccounts(project?: string) {
   return cachedAccounts || {}
 }
 
-export { loadAccounts, getAccounts }
-export type { ProjectAccounts }
+function getAccountsWithFiles(project?: string) {
+  if (project) {
+    if (!cachedAccountEntries) return []
+    return cachedAccountEntries[project] || []
+  }
+  return cachedAccountEntries || {}
+}
+
+export { loadAccounts, getAccounts, getAccountsWithFiles }
+export type { ProjectAccounts, ProjectAccountEntries, AccountEntry }
