@@ -551,7 +551,7 @@ export function MiddleContentToPrompt(content: MiddleContent): string {
     else if (role === 'assistant') {
       text = '<|Assistant|>'
       if (message.reasoning_content) {
-        text += `<|Thought|>${message.reasoning_content}<|/Thought|>`
+        text += `<|Thought|>${message.reasoning_content}<｜end▁of▁sentence｜>`
       }
       if (message.tool_calls) {
         text += '<|ToolCall|>'
@@ -560,7 +560,7 @@ export function MiddleContentToPrompt(content: MiddleContent): string {
         }
       }
       text += itemContent
-      text += '<|end_of_sentence|>'
+      text += '<｜end▁of▁sentence｜>'
     }
     prompt += text + '\n'
   }
