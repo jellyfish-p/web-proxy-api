@@ -153,16 +153,16 @@ export type AnthropicMessageRequest = {
     content: string | Array<
       | { type: 'text'; text: string }
       | {
-          type: 'tool_use'
-          id: string
-          name: string
-          input: Record<string, unknown>
-        }
+        type: 'tool_use'
+        id: string
+        name: string
+        input: Record<string, unknown>
+      }
       | {
-          type: 'tool_result'
-          tool_use_id: string
-          content: string
-        }
+        type: 'tool_result'
+        tool_use_id: string
+        content: string
+      }
     >
   }>
   system?: string | Array<{ type: 'text'; text: string }>
@@ -481,15 +481,15 @@ export function AnthropicMessage(body: AnthropicMessageRequest): MiddleContent {
           tool_call_id: part.tool_use_id,
           tool_calls: Object.keys(parsed.parsed).length
             ? [
-                {
-                  id: part.tool_use_id,
-                  type: 'function_result',
-                  function: {
-                    name: 'toolResult',
-                    arguments: safeJsonStringify(parsed.parsed)
-                  }
+              {
+                id: part.tool_use_id,
+                type: 'function_result',
+                function: {
+                  name: 'toolResult',
+                  arguments: safeJsonStringify(parsed.parsed)
                 }
-              ]
+              }
+            ]
             : undefined
         })
       }
@@ -511,5 +511,39 @@ export function AnthropicMessage(body: AnthropicMessageRequest): MiddleContent {
         parameters: tool.input_schema
       }
     }))
+  }
+}
+
+/**
+ * 转prompt请求体
+ * @param content 输入数据
+ */
+export function MiddleContentToPrompt(content: MiddleContent) {
+  let prompt = ""
+  for (const message of content.messages) {
+    const role = message.role
+    const content = message.content
+    let text = ""
+    if (role === "user")
+      text = `<|User|>${content}`
+    else if (role === 'system')
+      text = `<|system|>${content}`
+    else if (role === 'tool')
+      text = `<|tool_outputs id=${message.tool_call_id}|>${content}`
+    else if (role === 'assistant') {
+      text = '<|Assistant|>'
+      if (message.reasoning_content) {
+        text += `<|Thought|>${message.reasoning_content}<|/Thought|>`
+      }
+      if (message.tool_calls) {
+        text += '<|ToolCall|>'
+        for (const tool_call of message.tool_calls) {
+          text += `<|Tool id=${tool_call.id} type=${tool_call.type} name=${tool_call.function.name} arguments=${tool_call.function.arguments}|>`
+        }
+      }
+      text += content
+      text += '<|end_of_sentence|>'
+    }
+    prompt += text + "\n"
   }
 }

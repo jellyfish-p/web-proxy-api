@@ -19,4 +19,5 @@ export default defineEventHandler(async (event) => {
       message: 'Unauthorized'
     })
   }
+
 })
