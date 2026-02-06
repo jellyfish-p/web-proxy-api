@@ -30,19 +30,15 @@ useSeoMeta({
       <template #right>
         <UColorModeButton />
 
-        <UButton
-          to="https://github.com/jellyfish-p/web-proxy-api"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
+        <UButton to="https://github.com/jellyfish-p/web-proxy-api" target="_blank" icon="i-simple-icons-github"
+          aria-label="GitHub" color="neutral" variant="ghost" />
       </template>
     </UHeader>
 
     <UMain>
-      <NuxtPage />
+      <NuxtLayout>
+        <NuxtPage />
+      </NuxtLayout>
     </UMain>
   </UApp>
 </template>

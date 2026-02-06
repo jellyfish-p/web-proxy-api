@@ -2,6 +2,10 @@
 import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 
+definePageMeta({
+  layout: 'clear'
+})
+
 const fields: AuthFormField[] = [
   {
     name: 'password',

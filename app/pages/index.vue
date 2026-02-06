@@ -1,3 +1,8 @@
+<script lang="ts" setup>
+definePageMeta({
+  layout: 'clear'
+})
+</script>
 <template>
   <div>
     <UPageHero
