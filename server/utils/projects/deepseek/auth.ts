@@ -1,23 +1,22 @@
 // 导入文件系统操作模块
-import { writeFile } from "fs/promises"
-import { join } from "path"
+import { writeFile } from 'fs/promises'
+import { join } from 'path'
 // 导入账号管理函数
-import { getAccountsWithFiles } from "../../accounts"
+import { getAccountsWithFiles } from '../../accounts'
 // 导入 DeepSeek 相关常量
-import { DEEPSEEK_BASE_HEADERS, DEEPSEEK_LOGIN_URL } from "./const"
+import { DEEPSEEK_BASE_HEADERS, DEEPSEEK_LOGIN_URL } from './const'
 
-// DeepSeek 账号类型定义
+// DeepSeek 账号类型定义（仅账密）
 type DeepseekAccount = {
-  email?: string      // 邮箱地址
-  mobile?: string     // 手机号码
-  password?: string   // 密码
-  token?: string      // 认证令牌
-  type?: string       // 账号类型
-  fileName?: string   // 账号文件名
+  username?: string // 账号（邮箱或手机号）
+  password?: string // 密码
+  token?: string // 认证令牌
+  type?: string // 账号类型
+  fileName?: string // 账号文件名
 }
 
 // 账号目录路径
-const accountsDir = "./accounts"
+const accountsDir = './accounts'
 
 /**
  * 判断是否为手机号
@@ -31,14 +30,11 @@ const isMobile = (username: string) => {
 
 /**
  * 获取账号标识符
- * 优先返回邮箱，如果没有邮箱则返回手机号
  * @param account DeepSeek 账号对象
- * @returns 账号标识符（邮箱或手机号）
+ * @returns 账号标识符（username）
  */
 const getAccountIdentifier = (account: DeepseekAccount) => {
-  const email = account.email?.trim() ?? ""
-  const mobile = account.mobile?.trim() ?? ""
-  return email || mobile
+  return account.username?.trim() ?? ''
 }
 
 /**
@@ -48,7 +44,7 @@ const getAccountIdentifier = (account: DeepseekAccount) => {
  * @returns 规范化后的文件名
  */
 const normalizeAccountFileName = (fileName: string) => {
-  if (fileName.endsWith(".json")) return fileName
+  if (fileName.endsWith('.json')) return fileName
   return `${fileName}.json`
 }
 
@@ -59,7 +55,7 @@ const normalizeAccountFileName = (fileName: string) => {
  * @returns 账号条目对象，如果未找到则返回 null
  */
 const findAccountEntry = (account: DeepseekAccount) => {
-  const entries = getAccountsWithFiles("deepseek")
+  const entries = getAccountsWithFiles('deepseek')
   if (!Array.isArray(entries) || entries.length === 0) {
     return null
   }
@@ -68,17 +64,17 @@ const findAccountEntry = (account: DeepseekAccount) => {
   if (account.fileName) {
     const normalized = normalizeAccountFileName(account.fileName)
     return (
-      entries.find(entry => normalizeAccountFileName(entry.fileName) === normalized) ||
-      null
+      entries.find(entry => normalizeAccountFileName(entry.fileName) === normalized)
+      || null
     )
   }
 
-  // 否则按账号标识符（邮箱或手机号）查找
+  // 否则按账号标识符（username）查找
   const accountId = getAccountIdentifier(account)
   if (!accountId) return null
 
   return (
-    entries.find(entry => {
+    entries.find((entry) => {
       const data = entry.data as DeepseekAccount
       const dataId = getAccountIdentifier(data)
       return Boolean(dataId && dataId === accountId)
@@ -95,7 +91,7 @@ const findAccountEntry = (account: DeepseekAccount) => {
 const saveAccountToFile = async (account: DeepseekAccount) => {
   const entry = findAccountEntry(account)
   if (!entry) {
-    console.warn("⚠️  Account file not found, skipping save")
+    console.warn('⚠️  Account file not found, skipping save')
     return false
   }
 
@@ -105,11 +101,11 @@ const saveAccountToFile = async (account: DeepseekAccount) => {
   try {
     const filePath = join(accountsDir, entry.fileName)
     const content = JSON.stringify(data, null, 2)
-    await writeFile(filePath, content, "utf-8")
-    console.log("✅ Account updated successfully")
+    await writeFile(filePath, content, 'utf-8')
+    console.log('✅ Account updated successfully')
     return true
   } catch (error) {
-    console.error("❌ Failed to save account:", error)
+    console.error('❌ Failed to save account:', error)
     return false
   }
 }
@@ -122,35 +118,34 @@ const saveAccountToFile = async (account: DeepseekAccount) => {
  * @throws 如果账号信息不完整则抛出错误
  */
 const buildLoginPayload = (account: DeepseekAccount) => {
-  const email = account.email?.trim() ?? ""
-  const mobile = account.mobile?.trim() ?? ""
-  const password = account.password?.trim() ?? ""
+  const username = account.username?.trim() ?? ''
+  const password = account.password?.trim() ?? ''
 
-  if (!password || (!email && !mobile)) {
-    throw new Error("账号缺少必要的登录信息（必须提供 email 或 mobile 以及 password）")
+  if (!username || !password) {
+    throw new Error('账号缺少必要的登录信息（必须提供 username 和 password）')
   }
 
-  // 如果提供了邮箱，使用邮箱登录
-  if (email) {
+  // 自动识别：邮箱账号
+  if (username.includes('@')) {
     return {
-      email,
+      email: username,
       password,
-      device_id: "web_proxy_api",
-      os: "android"
+      device_id: 'web_proxy_api',
+      os: 'android'
     }
   }
 
-  // 否则使用手机号登录
-  if (!isMobile(mobile)) {
-    throw new Error("手机号格式不正确")
+  // 自动识别：手机号账号
+  if (!isMobile(username)) {
+    throw new Error('账号格式不正确（必须是邮箱或大陆手机号）')
   }
 
   return {
-    mobile,
+    mobile: username,
     area_code: null,
     password,
-    device_id: "web_proxy_api",
-    os: "android"
+    device_id: 'web_proxy_api',
+    os: 'android'
   }
 }
 
@@ -168,23 +163,23 @@ const parseLoginResponse = async (response: Response) => {
     console.warn(`[login_deepseek_via_account] ${text}`)
     data = JSON.parse(text) as Record<string, any>
   } catch (error) {
-    console.error("[login_deepseek_via_account] JSON解析失败:", error)
-    throw new Error("Account login failed: invalid JSON response")
+    console.error('[login_deepseek_via_account] JSON解析失败:', error)
+    throw new Error('Account login failed: invalid JSON response')
   }
 
   if (
-    data?.data == null ||
-    data.data?.biz_data == null ||
-    data.data?.biz_data?.user == null
+    data?.data == null
+    || data.data?.biz_data == null
+    || data.data?.biz_data?.user == null
   ) {
-    console.error("[login_deepseek_via_account] 登录响应格式错误:", data)
-    throw new Error("Account login failed: invalid response format")
+    console.error('[login_deepseek_via_account] 登录响应格式错误:', data)
+    throw new Error('Account login failed: invalid response format')
   }
 
   const token = data.data.biz_data.user?.token
   if (!token) {
-    console.error("[login_deepseek_via_account] 登录响应中缺少 token:", data)
-    throw new Error("Account login failed: missing token")
+    console.error('[login_deepseek_via_account] 登录响应中缺少 token:', data)
+    throw new Error('Account login failed: missing token')
   }
 
   return token as string
@@ -203,20 +198,20 @@ async function loginDeepseekViaAccount(account: DeepseekAccount) {
   let response: Response
   try {
     response = await fetch(DEEPSEEK_LOGIN_URL, {
-      method: "POST",
+      method: 'POST',
       headers: DEEPSEEK_BASE_HEADERS,
       body: JSON.stringify(payload)
     })
   } catch (error) {
-    console.error("[login_deepseek_via_account] 登录请求异常:", error)
-    throw new Error("Account login failed: 请求异常")
+    console.error('[login_deepseek_via_account] 登录请求异常:', error)
+    throw new Error('Account login failed: 请求异常')
   }
 
   if (!response.ok) {
     console.error(
       `[login_deepseek_via_account] 登录失败, status=${response.status}`
     )
-    throw new Error("Account login failed: status not ok")
+    throw new Error('Account login failed: status not ok')
   }
 
   const token = await parseLoginResponse(response)
@@ -228,14 +223,12 @@ async function loginDeepseekViaAccount(account: DeepseekAccount) {
 /**
  * 使用用户名和密码登录
  * 根据用户名格式（邮箱或手机号）自动选择登录方式
- * @param username 用户名（邮箱或手机号）
+ * @param username 账号（邮箱或手机号）
  * @param password 密码
  * @returns 认证令牌字符串
  */
 async function LoginWithPassword(username: string, password: string) {
-  const account: DeepseekAccount = username.includes("@")
-    ? { email: username, password }
-    : { mobile: username, password }
+  const account: DeepseekAccount = { username, password }
   return await loginDeepseekViaAccount(account)
 }
 

@@ -1,20 +1,20 @@
 // 账号类型定义
 type Account = {
-  inUse: boolean      // 账号是否正在使用中
-  fileName: string    // 账号文件名
+  inUse: boolean // 账号是否正在使用中
+  fileName: string // 账号文件名
 }
 
 // 模型状态类型定义
 type ModelState = {
-  order: string[]                    // 账号轮询顺序
-  cursor: number                     // 当前轮询位置
-  skippedUntil: Map<string, number>  // 账号跳过时间映射（文件名 -> 跳过截止时间戳）
+  order: string[] // 账号轮询顺序
+  cursor: number // 当前轮询位置
+  skippedUntil: Map<string, number> // 账号跳过时间映射（文件名 -> 跳过截止时间戳）
 }
 
 // 模型元数据类型定义
 type ModelMeta = {
-  owner: string    // 模型所有者
-  created: number  // 创建时间戳
+  owner: string // 模型所有者
+  created: number // 创建时间戳
 }
 
 // 已注册的账号列表

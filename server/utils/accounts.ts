@@ -7,8 +7,8 @@ type ProjectAccounts = Record<string, string[]>
 
 // 账号条目类型：包含文件名和账号数据
 type AccountEntry<T = any> = {
-  fileName: string  // 账号文件名
-  data: T          // 账号数据
+  fileName: string // 账号文件名
+  data: T // 账号数据
 }
 
 // 项目账号条目映射类型：项目名称到账号条目数组的映射

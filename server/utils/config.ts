@@ -8,14 +8,14 @@ import { parse, stringify } from 'yaml'
 type Config = {
   // 仪表板配置
   dashboard: {
-    enable: boolean    // 是否启用仪表板
-    password: string   // 仪表板密码
+    enable: boolean // 是否启用仪表板
+    password: string // 仪表板密码
   }
   // 项目配置（可选）
   projects?: {
-    [key: string]: object  // 项目名称到配置对象的映射
+    [key: string]: object // 项目名称到配置对象的映射
   }
-  keys: [string]  // API 密钥列表
+  keys: [string] // API 密钥列表
 
 }
 

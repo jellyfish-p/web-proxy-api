@@ -8,13 +8,14 @@ import { getRegisteredModels } from '~~/server/utils/selector'
 export default defineEventHandler(() => {
   // 获取所有已注册的模型并转换为标准格式
   const models = getRegisteredModels().map(model => ({
-    id: model.id,           // 模型 ID
-    object: 'model',        // 对象类型
+    id: model.id, // 模型 ID
+    object: 'model', // 对象类型
     created: model.created, // 创建时间戳
-    owned_by: model.owner   // 模型所有者
+    owned_by: model.owner // 模型所有者
   }))
 
   return {
-    models
+    object: 'list',
+    data: models
   }
 })
