@@ -6,6 +6,13 @@ import { getConfig, saveConfig } from './config'
 // 加密密码的前缀标识
 const ENCRYPT_PREFIX = '$encrypt$'
 
+// Dashboard 登录态 Cookie 名称
+const DASHBOARD_AUTH_COOKIE = 'dashboard_auth'
+// Dashboard 登录态哈希算法版本，用于后续平滑升级算法
+const DASHBOARD_AUTH_VERSION = 'v1'
+// Dashboard 登录态哈希盐（固定字符串，避免与其他哈希用途混用）
+const DASHBOARD_AUTH_SALT = 'web-proxy-api:dashboard:auth'
+
 /**
  * 加密密码
  * 使用 SHA256 算法对密码进行加密
@@ -32,6 +39,36 @@ function verifyPassword(plainPassword: string, encryptedPassword: string): boole
   }
   const encrypted = encryptPassword(plainPassword)
   return encrypted === encryptedPassword
+}
+
+/**
+ * 生成 Dashboard 登录态哈希
+ *
+ * 设计目标：
+ * 1. 仅依赖本地 config 中的 dashboard.password（明文或加密串）
+ * 2. 当且仅当 password 变化时，登录态哈希失效
+ * 3. 同一份配置下可长期复用（满足“密码不变即可一直通过鉴权”）
+ *
+ * @param configPassword 配置中的 dashboard.password 原始值
+ * @returns 可写入 Cookie 的稳定哈希字符串
+ */
+function createDashboardAuthHash(configPassword: string): string {
+  const hash = createHash('sha256')
+  hash.update(`${DASHBOARD_AUTH_SALT}:${DASHBOARD_AUTH_VERSION}:${configPassword}`)
+  return `${DASHBOARD_AUTH_VERSION}.${hash.digest('hex')}`
+}
+
+/**
+ * 校验 Dashboard 登录态哈希
+ * @param authHash Cookie 中携带的登录态哈希
+ * @param configPassword 当前配置中的 dashboard.password
+ * @returns 是否有效
+ */
+function verifyDashboardAuthHash(authHash: string, configPassword: string): boolean {
+  if (!authHash) {
+    return false
+  }
+  return authHash === createDashboardAuthHash(configPassword)
 }
 
 /**
@@ -77,4 +114,13 @@ async function initDashboardPassword(): Promise<boolean> {
 }
 
 // 导出所有认证相关函数
-export { encryptPassword, verifyPassword, isPasswordEncrypted, initDashboardPassword }
+export {
+  ENCRYPT_PREFIX,
+  DASHBOARD_AUTH_COOKIE,
+  encryptPassword,
+  verifyPassword,
+  createDashboardAuthHash,
+  verifyDashboardAuthHash,
+  isPasswordEncrypted,
+  initDashboardPassword
+}
