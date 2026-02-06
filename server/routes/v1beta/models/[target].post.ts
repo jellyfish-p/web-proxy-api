@@ -5,6 +5,7 @@
  *
  * 当前支持:
  * - action=generateContent
+ * - action=streamGenerateContent（建议配合 ?alt=sse）
  *
  * 工作流程:
  * 1. 验证 API 密钥（兼容 key 查询参数、x-goog-api-key、x-api-key、Authorization）
@@ -50,14 +51,14 @@ export default defineEventHandler(async (event) => {
   if (separatorIndex <= 0 || separatorIndex >= target.length - 1) {
     throw createError({
       status: 400,
-      message: 'Invalid path. Expected /v1beta/models/{model}:generateContent'
+      message: 'Invalid path. Expected /v1beta/models/{model}:{generateContent|streamGenerateContent}'
     })
   }
 
   const model = target.slice(0, separatorIndex)
   const action = target.slice(separatorIndex + 1)
 
-  if (action !== 'generateContent') {
+  if (action !== 'generateContent' && action !== 'streamGenerateContent') {
     throw createError({
       status: 404,
       message: `Unsupported Gemini action: ${action}`
@@ -69,6 +70,11 @@ export default defineEventHandler(async (event) => {
   const middleContent = GeminiGenerateContent(body)
   // 路径参数优先于请求体中的 model 字段
   middleContent.model = model
+
+  // streamGenerateContent 强制走流式返回
+  if (action === 'streamGenerateContent') {
+    middleContent.stream = true
+  }
 
   // ====== 4. 分发请求 ======
   const result = await dispatchMiddleContent(middleContent)
