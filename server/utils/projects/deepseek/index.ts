@@ -137,8 +137,7 @@ async function loadWasmInstance() {
       try {
         bytes = await readFile(candidate)
         break
-      }
-      catch {
+      } catch {
         // 尝试下一个候选路径
       }
     }
@@ -178,7 +177,7 @@ async function computePowAnswer(challenge: {
   }
 
   const instance = await loadWasmInstance()
-  const exports = instance.exports as Record<string, any>
+  const exports = instance.exports as Record<string, unknown>
 
   // 获取 WASM 导出函数
   const memory = exports.memory as WebAssembly.Memory
@@ -364,7 +363,7 @@ async function resolveAccountForModel(model: string) {
   }
 
   // 从账号存储中获取完整账号信息
-  const accountEntries = getAccountsWithFiles('deepseek') as Array<{ fileName: string; data: DeepseekAccount }>
+  const accountEntries = getAccountsWithFiles('deepseek') as Array<{ fileName: string, data: DeepseekAccount }>
   const accountEntry = accountEntries.find(entry => entry.fileName === selected.fileName)
 
   if (!accountEntry) {
@@ -405,8 +404,7 @@ function parseDeepseekEvent(line: string): DeepseekStreamEvent | null {
 
   try {
     return JSON.parse(payload) as DeepseekStreamEvent
-  }
-  catch {
+  } catch {
     return null
   }
 }
@@ -587,7 +585,14 @@ export async function DeepSeekHandler(body: MiddleContent) {
 
                 // 处理数组类型事件（检查是否包含 FINISHED 信号）
                 if (Array.isArray(event.v)) {
-                  const hasFinishedSignal = event.v.some((item: any) => item?.p === 'status' && item?.v === 'FINISHED')
+                  const hasFinishedSignal = event.v.some((item: unknown) => {
+                    if (!item || typeof item !== 'object') {
+                      return false
+                    }
+
+                    const maybeEvent = item as { p?: unknown, v?: unknown }
+                    return maybeEvent.p === 'status' && maybeEvent.v === 'FINISHED'
+                  })
                   if (hasFinishedSignal) {
                     await finish()
                     return
@@ -614,8 +619,7 @@ export async function DeepSeekHandler(body: MiddleContent) {
                   if (!reasoningEnabled) continue
                   fullReasoning += event.v
                   delta.reasoning_content = event.v
-                }
-                else {
+                } else {
                   // 普通内容
                   fullContent += event.v
                   delta.content = event.v
@@ -629,12 +633,10 @@ export async function DeepSeekHandler(body: MiddleContent) {
             }
 
             await finish()
-          }
-          catch (error) {
+          } catch (error) {
             clearInterval(keepAliveTimer)
             controller.error(error)
-          }
-          finally {
+          } finally {
             // 释放账号锁
             releaseAccount(account.fileName)
             reader.releaseLock()
@@ -650,12 +652,11 @@ export async function DeepSeekHandler(body: MiddleContent) {
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
         'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
+        'Connection': 'keep-alive',
         'X-Accel-Buffering': 'no' // 禁用 Nginx 缓冲
       }
     })
-  }
-  catch (error) {
+  } catch (error) {
     // 发生错误时释放账号锁
     releaseAccount(account.fileName)
     throw error

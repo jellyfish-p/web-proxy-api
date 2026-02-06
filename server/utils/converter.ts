@@ -85,7 +85,7 @@ export type OpenAIChatCompletionRequest = {
   model: string
   messages: Array<{
     role: 'system' | 'assistant' | 'user' | 'tool'
-    content: string | Array<{ type: 'text'; text: string }>
+    content: string | Array<{ type: 'text', text: string }>
     name?: string
     tool_calls?: Array<{
       id: string
@@ -174,7 +174,7 @@ export type AnthropicMessageRequest = {
   messages: Array<{
     role: 'user' | 'assistant'
     content: string | Array<
-      | { type: 'text'; text: string }
+      | { type: 'text', text: string }
       | {
         type: 'tool_use'
         id: string
@@ -188,7 +188,7 @@ export type AnthropicMessageRequest = {
       }
     >
   }>
-  system?: string | Array<{ type: 'text'; text: string }>
+  system?: string | Array<{ type: 'text', text: string }>
   temperature?: number
   top_p?: number
   top_k?: number
@@ -207,7 +207,7 @@ export type AnthropicMessageRequest = {
  * @param content - 字符串或文本对象数组
  * @returns 转换后的字符串
  */
-function toTextContent(content: string | Array<{ type: 'text'; text: string }>): string {
+function toTextContent(content: string | Array<{ type: 'text', text: string }>): string {
   if (typeof content === 'string') {
     return content
   }
@@ -225,8 +225,7 @@ function toTextContent(content: string | Array<{ type: 'text'; text: string }>):
 function safeJsonStringify(value: unknown): string {
   try {
     return JSON.stringify(value ?? {})
-  }
-  catch {
+  } catch {
     return '{}'
   }
 }
@@ -236,14 +235,13 @@ function safeJsonStringify(value: unknown): string {
  * @param value - 要解析的字符串
  * @returns 包含解析后的对象和文本的对象
  */
-function parseJsonObjectOrRawText(value: string): { parsed: Record<string, unknown>; text: string } {
+function parseJsonObjectOrRawText(value: string): { parsed: Record<string, unknown>, text: string } {
   try {
     const parsed = JSON.parse(value) as unknown
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return { parsed: parsed as Record<string, unknown>, text: '' }
     }
-  }
-  catch {
+  } catch {
     // 解析失败，忽略错误
   }
   return { parsed: {}, text: value }
@@ -400,11 +398,9 @@ export function GeminiGenerateContent(body: GeminiGenerateContentRequest): Middl
   const allowed = body.toolConfig?.functionCallingConfig?.allowedFunctionNames
   if (mode === 'NONE') {
     toolChoice = 'none'
-  }
-  else if (mode === 'AUTO') {
+  } else if (mode === 'AUTO') {
     toolChoice = 'auto'
-  }
-  else if (mode === 'ANY') {
+  } else if (mode === 'ANY') {
     if (allowed?.length === 1 && allowed[0]) {
       toolChoice = {
         type: 'function',
@@ -412,8 +408,7 @@ export function GeminiGenerateContent(body: GeminiGenerateContentRequest): Middl
           name: allowed[0]
         }
       }
-    }
-    else {
+    } else {
       toolChoice = 'required'
     }
   }
@@ -444,9 +439,9 @@ export function AnthropicMessage(body: AnthropicMessageRequest): MiddleContent {
     const systemText = typeof body.system === 'string'
       ? body.system
       : body.system
-        .filter(item => item.type === 'text')
-        .map(item => item.text)
-        .join('\n')
+          .filter(item => item.type === 'text')
+          .map(item => item.text)
+          .join('\n')
 
     if (systemText) {
       messages.push({
@@ -504,15 +499,15 @@ export function AnthropicMessage(body: AnthropicMessageRequest): MiddleContent {
           tool_call_id: part.tool_use_id,
           tool_calls: Object.keys(parsed.parsed).length
             ? [
-              {
-                id: part.tool_use_id,
-                type: 'function_result',
-                function: {
-                  name: 'toolResult',
-                  arguments: safeJsonStringify(parsed.parsed)
+                {
+                  id: part.tool_use_id,
+                  type: 'function_result',
+                  function: {
+                    name: 'toolResult',
+                    arguments: safeJsonStringify(parsed.parsed)
+                  }
                 }
-              }
-            ]
+              ]
             : undefined
         })
       }

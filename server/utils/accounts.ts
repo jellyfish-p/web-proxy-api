@@ -24,7 +24,7 @@ import { join } from 'path'
 type ProjectAccounts = Record<string, string[]>
 
 // 账号条目类型：包含文件名和账号数据
-type AccountEntry<T = any> = {
+type AccountEntry<T = unknown> = {
   fileName: string // 账号文件名
   data: T // 账号数据
 }

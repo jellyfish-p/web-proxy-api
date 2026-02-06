@@ -34,5 +34,5 @@ export const DEEPSEEK_MODELS = [
   'deepseek-chat',
   'deepseek-reasoning',
   'deepseek-chat-search',
-  'deepseek-reasoning-search',
+  'deepseek-reasoning-search'
 ]

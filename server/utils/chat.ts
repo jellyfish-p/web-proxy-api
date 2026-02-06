@@ -109,11 +109,10 @@ async function aggregateSseToOpenAICompletion(middleContent: MiddleContent, sseR
         if (!data || data === '[DONE]') continue
 
         // 解析 JSON 数据
-        let chunk: Record<string, any>
+        let chunk: Record<string, unknown>
         try {
-          chunk = JSON.parse(data) as Record<string, any>
-        }
-        catch {
+          chunk = JSON.parse(data) as Record<string, unknown>
+        } catch {
           continue
         }
 
@@ -151,8 +150,7 @@ async function aggregateSseToOpenAICompletion(middleContent: MiddleContent, sseR
         }
       }
     }
-  }
-  finally {
+  } finally {
     reader.releaseLock()
   }
 
@@ -298,11 +296,10 @@ export function openAISSEToGeminiSSE(sseResponse: Response, fallbackModel: strin
             }
 
             // 解析 OpenAI 格式 chunk
-            let chunk: Record<string, any>
+            let chunk: Record<string, unknown>
             try {
-              chunk = JSON.parse(data) as Record<string, any>
-            }
-            catch {
+              chunk = JSON.parse(data) as Record<string, unknown>
+            } catch {
               continue
             }
 
@@ -334,11 +331,9 @@ export function openAISSEToGeminiSSE(sseResponse: Response, fallbackModel: strin
         }
 
         controller.close()
-      }
-      catch (error) {
+      } catch (error) {
         controller.error(error)
-      }
-      finally {
+      } finally {
         sourceReader.releaseLock()
       }
     }
@@ -348,7 +343,7 @@ export function openAISSEToGeminiSSE(sseResponse: Response, fallbackModel: strin
     headers: {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive'
+      'Connection': 'keep-alive'
     }
   })
 }

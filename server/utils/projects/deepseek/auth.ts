@@ -163,6 +163,19 @@ const buildLoginPayload = (account: DeepseekAccount) => {
 }
 
 /**
+ * DeepSeek 登录响应类型（仅包含当前逻辑使用到的字段）
+ */
+type DeepseekLoginResponse = {
+  data?: {
+    biz_data?: {
+      user?: {
+        token?: string
+      }
+    }
+  }
+}
+
+/**
  * 解析登录响应
  * 从登录 API 响应中提取认证令牌
  * @param response 登录 API 响应对象
@@ -170,11 +183,11 @@ const buildLoginPayload = (account: DeepseekAccount) => {
  * @throws 如果响应格式不正确或缺少令牌则抛出错误
  */
 const parseLoginResponse = async (response: Response) => {
-  let data: Record<string, any>
+  let data: DeepseekLoginResponse
   try {
     const text = await response.text()
     console.warn(`[login_deepseek_via_account] ${text}`)
-    data = JSON.parse(text) as Record<string, any>
+    data = JSON.parse(text) as DeepseekLoginResponse
   } catch (error) {
     console.error('[login_deepseek_via_account] JSON解析失败:', error)
     throw new Error('Account login failed: invalid JSON response')
