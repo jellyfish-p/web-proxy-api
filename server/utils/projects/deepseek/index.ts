@@ -12,6 +12,7 @@
  */
 
 import { readFile } from 'fs/promises'
+import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { MiddleContentToPrompt, type MiddleContent } from '../../converter'
 import { getAccountsWithFiles } from '../../accounts'
@@ -60,15 +61,14 @@ type DeepseekStreamEvent = {
 /**
  * PoW WASM 文件候选路径
  *
- * 按优先级尝试加载，支持不同的部署场景
+ * deepseek 的 wasm 已拷贝进当前项目，优先使用项目内固定路径。
+ * 同时保留 import.meta.url 路径，兼容本地直接运行。
  */
 const wasmCandidatePaths = [
-  // 开发环境：相对于当前模块
-  fileURLToPath(new URL('./sha3_wasm_bg.7b9ca65ddd.wasm', import.meta.url)),
-  // 生产环境：相对于项目根目录
-  './server/utils/projects/deepseek/sha3_wasm_bg.7b9ca65ddd.wasm',
-  // 备选：参考项目位置
-  '../deepseek2api/sha3_wasm_bg.7b9ca65ddd.wasm'
+  // Bun/Node 从项目根目录启动时的固定路径
+  resolve(process.cwd(), 'server/utils/projects/deepseek/sha3_wasm_bg.7b9ca65ddd.wasm'),
+  // 本地模块相对路径（开发兜底）
+  fileURLToPath(new URL('./sha3_wasm_bg.7b9ca65ddd.wasm', import.meta.url))
 ]
 
 /** WASM 实例缓存（单例模式，避免重复加载） */
