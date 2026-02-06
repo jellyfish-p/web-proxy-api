@@ -1,3 +1,14 @@
+/**
+ * tokenizer.ts - DeepSeek Tokenizer 模块
+ *
+ * 本模块使用 Hugging Face Tokenizers 库计算 DeepSeek 模型的 token 数量，
+ * 用于响应中的 usage 统计。
+ *
+ * 特点：
+ * - 使用单例模式加载 tokenizer，避免重复加载
+ * - 使用 DeepSeek 官方 tokenizer 配置
+ */
+
 // 导入 Hugging Face tokenizer 库
 import { Tokenizer } from '@huggingface/tokenizers'
 // 导入文件系统操作模块

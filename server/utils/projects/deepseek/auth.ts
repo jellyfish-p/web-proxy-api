@@ -1,3 +1,16 @@
+/**
+ * auth.ts - DeepSeek 账号认证模块
+ *
+ * 本模块负责 DeepSeek 账号的登录认证，包括：
+ * 1. 支持邮箱和手机号两种登录方式
+ * 2. 自动识别账号类型
+ * 3. 获取并保存认证令牌
+ *
+ * 核心函数：
+ * - loginDeepseekViaAccount(): 使用账号对象登录
+ * - LoginWithPassword(): 使用用户名密码登录
+ */
+
 // 导入文件系统操作模块
 import { writeFile } from 'fs/promises'
 import { join } from 'path'

@@ -1,3 +1,21 @@
+/**
+ * accounts.ts - 账号管理模块
+ *
+ * 本模块负责账号文件的加载和管理，包括：
+ * 1. 从 ./accounts 目录加载 JSON 格式的账号文件
+ * 2. 按项目类型分组账号
+ * 3. 缓存账号数据到内存
+ *
+ * 账号文件格式：
+ * - 必须为 JSON 格式，放置在 ./accounts 目录下
+ * - 必须包含 type 字段指定账号所属项目（如 "deepseek"）
+ * - 其他字段由各项目模块定义（如 username, password, token）
+ *
+ * 使用方式：
+ * - getAccounts(project): 获取指定项目的账号数据数组
+ * - getAccountsWithFiles(project): 获取带文件名的账号条目数组
+ */
+
 // 导入文件系统和路径操作模块
 import { readdirSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { join } from 'path'

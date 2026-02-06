@@ -1,3 +1,18 @@
+/**
+ * config.ts - 配置管理模块
+ *
+ * 本模块负责应用配置的加载、缓存、保存和验证，包括：
+ * 1. 从 config.yaml 文件加载配置
+ * 2. 缓存配置到内存
+ * 3. 保存配置到文件
+ * 4. API 密钥验证
+ *
+ * 配置文件结构：
+ * - dashboard: 仪表板配置（启用状态、密码）
+ * - projects: 各项目的自定义配置
+ * - keys: API 密钥列表
+ */
+
 // 导入文件系统操作相关模块
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'

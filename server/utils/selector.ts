@@ -1,3 +1,26 @@
+/**
+ * selector.ts - 账号选择器模块
+ *
+ * 本模块实现了一个基于轮询的账号选择器，用于：
+ * 1. 注册账号到指定模型的可用账号列表
+ * 2. 按轮询顺序选择可用账号
+ * 3. 管理账号的使用状态和临时跳过状态
+ * 4. 记录模型的元数据（所有者、创建时间）
+ *
+ * 核心功能：
+ * - registerAccount(): 注册账号到模型
+ * - selectAccount(): 选择一个可用账号（轮询算法）
+ * - releaseAccount(): 释放账号（标记为可用）
+ * - skipAccount(): 临时跳过账号（如遇到错误时）
+ * - clearSkip(): 清除跳过状态
+ * - getModelOwner(): 获取模型所属的提供商
+ *
+ * 使用场景：
+ * - 多账号负载均衡
+ * - 账号限流/错误后的自动切换
+ * - 按模型分配不同账号池
+ */
+
 // 账号类型定义
 type Account = {
   inUse: boolean // 账号是否正在使用中
@@ -187,6 +210,17 @@ function getRegisteredModels() {
   }))
 }
 
+/**
+ * 获取模型所有者
+ * @param model 模型名称
+ * @returns 模型所有者，不存在时返回 null
+ */
+function getModelOwner(model: string): string | null {
+  const meta = modelMeta.get(model)
+  if (!meta) return null
+  return meta.owner
+}
+
 // 导出账号选择器相关函数
 export {
   registerAccount,
@@ -194,7 +228,8 @@ export {
   releaseAccount,
   skipAccount,
   clearSkip,
-  getRegisteredModels
+  getRegisteredModels,
+  getModelOwner
 }
 // 导出类型定义
 export type { Account }

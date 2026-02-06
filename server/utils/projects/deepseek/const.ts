@@ -1,3 +1,12 @@
+/**
+ * const.ts - DeepSeek API 常量定义
+ *
+ * 本模块定义了 DeepSeek 网页版 API 的常量，包括：
+ * - API 端点 URL
+ * - 请求头配置
+ * - 支持的模型列表
+ */
+
 // DeepSeek API 主机地址
 export const DEEPSEEK_HOST = 'chat.deepseek.com'
 // DeepSeek 用户登录 API 地址

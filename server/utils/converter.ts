@@ -1,3 +1,26 @@
+/**
+ * converter.ts - 请求格式转换器模块
+ *
+ * 本模块负责将不同 API 格式（OpenAI、Gemini、Anthropic）的请求
+ * 转换为统一的中间格式（MiddleContent），便于后续统一处理。
+ *
+ * 支持的输入格式：
+ * - OpenAI Chat Completions API (v1/chat/completions)
+ * - Google Gemini API (v1beta/models/{model}:generateContent)
+ * - Anthropic Messages API (v1/messages)
+ *
+ * 核心类型：
+ * - MiddleContent: 统一的请求中间格式
+ * - MiddleMessage: 统一的消息格式
+ * - MiddleTool: 统一的工具定义格式
+ *
+ * 转换函数：
+ * - OpenaiCompletion(): OpenAI 请求 -> MiddleContent
+ * - GeminiGenerateContent(): Gemini 请求 -> MiddleContent
+ * - AnthropicMessage(): Anthropic 请求 -> MiddleContent
+ * - MiddleContentToPrompt(): MiddleContent -> DeepSeek prompt 字符串
+ */
+
 // 中间层工具调用类型定义
 export type MiddleToolCall = {
   id: string
@@ -518,18 +541,18 @@ export function AnthropicMessage(body: AnthropicMessageRequest): MiddleContent {
  * 转prompt请求体
  * @param content 输入数据
  */
-export function MiddleContentToPrompt(content: MiddleContent) {
-  let prompt = ""
+export function MiddleContentToPrompt(content: MiddleContent): string {
+  let prompt = ''
   for (const message of content.messages) {
     const role = message.role
-    const content = message.content
-    let text = ""
-    if (role === "user")
-      text = `<|User|>${content}`
+    const itemContent = message.content
+    let text = ''
+    if (role === 'user')
+      text = `<|User|>${itemContent}`
     else if (role === 'system')
-      text = `<|system|>${content}`
+      text = `<|system|>${itemContent}`
     else if (role === 'tool')
-      text = `<|tool_outputs id=${message.tool_call_id}|>${content}`
+      text = `<|tool_outputs id=${message.tool_call_id}|>${itemContent}`
     else if (role === 'assistant') {
       text = '<|Assistant|>'
       if (message.reasoning_content) {
@@ -541,9 +564,11 @@ export function MiddleContentToPrompt(content: MiddleContent) {
           text += `<|Tool id=${tool_call.id} type=${tool_call.type} name=${tool_call.function.name} arguments=${tool_call.function.arguments}|>`
         }
       }
-      text += content
+      text += itemContent
       text += '<|end_of_sentence|>'
     }
-    prompt += text + "\n"
+    prompt += text + '\n'
   }
+
+  return prompt
 }
